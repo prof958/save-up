@@ -24,7 +24,7 @@
 - **Version Control**: Git
 - **Code Editor**: VS Code (assumed)
 
-## Project Structure (Current - TypeScript)
+## Project Structure (Current - TypeScript - Updated Phase 4)
 
 ```
 save-up/
@@ -34,32 +34,53 @@ save-up/
 │   ├── systemPatterns.md
 │   ├── techContext.md
 │   ├── activeContext.md
-│   └── progress.md
+│   ├── progress.md
+│   └── design-system.md
+├── dbscripts/                # Database SQL scripts
+│   ├── 01_initial_schema.sql
+│   ├── 02_auth_setup.sql
+│   ├── 03_onboarding_fields.sql
+│   └── 04_spending_decisions.sql
 ├── src/
-│   ├── components/          # Reusable UI components
-│   │   ├── auth/           # Auth-related components (to be created)
-│   │   ├── calculator/     # Calculator components (to be created)
-│   │   ├── profile/        # Profile components (to be created)
-│   │   └── shared/         # Shared/common components (to be created)
+│   ├── components/          # Reusable UI components (to be created)
+│   │   ├── auth/           # Auth-related components
+│   │   ├── calculator/     # Calculator components
+│   │   ├── profile/        # Profile components
+│   │   └── shared/         # Shared/common components
 │   ├── screens/            # Main screen components
-│   │   ├── HomeScreen.tsx  ✅
-│   │   ├── SpendingScreen.tsx  ✅
-│   │   └── ProfileScreen.tsx  ✅
+│   │   ├── onboarding/
+│   │   │   ├── WelcomeScreen.tsx  ✅
+│   │   │   ├── SalaryInputScreen.tsx  ✅
+│   │   │   ├── QuestionnaireScreen.tsx  ✅
+│   │   │   └── ResultsScreen.tsx  ✅
+│   │   ├── HomeScreen.tsx  ✅ (Phase 4)
+│   │   ├── SpendingScreen.tsx  (to be created - Phase 5)
+│   │   └── ProfileScreen.tsx  (to be created - Phase 5)
 │   ├── navigation/         # Navigation configuration
-│   │   └── AppNavigator.tsx  ✅
-│   ├── contexts/           # React Context providers (to be created)
+│   │   ├── AppNavigator.tsx  ✅ (updated Phase 4 with Ionicons)
+│   │   ├── AuthNavigator.tsx  ✅
+│   │   └── OnboardingNavigator.tsx  ✅
+│   ├── contexts/           # React Context providers
+│   │   ├── AuthContext.tsx  ✅
+│   │   └── ProfileContext.tsx  ✅ (NEW Phase 4)
 │   ├── hooks/              # Custom React hooks (to be created)
 │   ├── utils/              # Utility functions
-│   │   └── calculations.ts  ✅
-│   ├── config/             # Configuration files (to be created)
+│   │   ├── calculations.ts  ✅
+│   │   └── decisionStorage.ts  ✅ (NEW Phase 4)
+│   ├── config/             # Configuration files
+│   │   └── supabase.ts  ✅ (updated Phase 4 with stats columns)
 │   └── constants/          # App constants
-│       └── index.ts  ✅
+│       ├── index.ts  ✅
+│       ├── theme.ts  ✅
+│       ├── regions.ts  ✅
+│       ├── questionnaire.ts  ✅
+│       └── savingTips.ts  ✅ (NEW Phase 4)
 ├── assets/                 # Images, fonts, etc.
-├── App.tsx                # Main app entry  ✅
+├── App.tsx                # Main app entry  ✅ (updated Phase 4)
 ├── app.json               # Expo configuration
 ├── tsconfig.json          # TypeScript configuration  ✅
 ├── package.json           # Dependencies
-├── .env                   # Environment variables (to be created)
+├── .env                   # Environment variables
 └── README.md             # Project documentation  ✅
 ```
 
@@ -74,9 +95,12 @@ save-up/
   "@supabase/supabase-js": "^2.77.0",
   "@react-navigation/native": "^7.1.19",
   "@react-navigation/bottom-tabs": "^7.7.2",
+  "@react-native-async-storage/async-storage": "^1.13.4",
+  "@expo/vector-icons": "^14.0.0",
   "react-native-url-polyfill": "^3.0.0",
   "react-native-screens": "~4.16.0",
   "react-native-safe-area-context": "~5.6.0",
+  "react-native-gesture-handler": "~2.20.0",
   "expo-status-bar": "~3.0.8"
 }
 ```
@@ -140,6 +164,16 @@ EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=[google-client-id]
 - Create tables via Supabase SQL editor
 - Set up Row Level Security policies
 - Create necessary indexes
+- user_profiles extended with:
+  - Onboarding fields: currency, region, questionnaire_score, questionnaire_answers, onboarding_completed
+  - Stats columns: total_money_saved, total_hours_saved, total_decisions, buy_count, dont_buy_count, save_count, let_me_think_count
+
+### Local Storage (AsyncStorage - Phase 4)
+- Store individual spending decisions locally for privacy
+- Key: "spending_decisions"
+- Calculate stats from local decisions
+- Sync stats aggregates to user_profiles in Supabase
+- Benefits: Privacy (decisions stay on device) + Backup (stats in cloud) + Offline support
 
 ### Security Rules (RLS Policies)
 ```sql

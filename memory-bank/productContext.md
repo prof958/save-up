@@ -28,18 +28,31 @@ These translations make the cost visceral and personal, giving users a moment to
 5. Arrives at Home tab ready to use
 
 #### Regular Usage Flow
-1. User sees something they want to buy
-2. Opens app → navigates to Spending tab
-3. Enters the item's cost
-4. Taps "Calculate"
-5. Sees popup showing:
-   - Work hours equivalent
-   - Investment opportunity cost
-   - Three clear action buttons
-6. Makes decision:
-   - **Buy**: Acknowledges the cost, proceeds with purchase
-   - **Don't Buy**: Decides against it, feels good about saving
-   - **Let Me Think**: Closes popup, gives time to consider
+1. **Home Tab** - User sees their progress
+   - Stats cards showing money saved, hours saved
+   - Active "Let Me Think" items with countdown timers
+   - Money-saving tips and motivation
+   
+2. **Considering a Purchase** - User sees something they want to buy
+   - Opens app → navigates to Spending tab
+   - Enters the item's cost (and optional name)
+   - Taps "Calculate"
+   - Sees modal showing:
+     - Work hours equivalent
+     - Investment opportunity cost
+     - Four clear action buttons
+   
+3. **Makes decision**:
+   - **Buy**: Acknowledges the cost, proceeds with purchase (tracked as "bought")
+   - **Don't Buy**: Decides against it, feels good about saving (tracked as "saved")
+   - **Save**: Commits to saving this money (tracked as "saved")
+   - **Let Me Think**: Sets a reminder timer, gives time to consider (tracked until decision made)
+
+4. **Tracking & Motivation**
+   - Decisions tracked in database
+   - Home screen shows cumulative savings
+   - "Let Me Think" items appear on Home with countdown
+   - Tips encourage good habits
 
 ### User Experience Goals
 
@@ -79,18 +92,42 @@ Launch → Login/Signup Screen
 ### Main Navigation
 ```
 App Home
-├─ Home Tab (Default)
+├─ Home Tab (Dashboard - Default)
+│   ├─ Stats Cards (Money Saved, Hours Saved)
+│   ├─ "Let Me Think" Timers (Active reminders)
+│   └─ Saving Tips (Motivation & education)
 ├─ Spending Tab (Calculator)
+│   ├─ Price Input (with optional item name)
+│   ├─ Calculate Button
+│   └─ Results Modal (Work Hours + Investment + Decisions)
 └─ Profile Tab (Settings/Salary)
+    ├─ User Info Display
+    ├─ Edit Salary/Currency/Region
+    └─ Logout
 ```
 
 ### Calculator Flow
 ```
-Spending Tab → Enter Price → Calculate →
-Popup Display:
+Spending Tab → Enter Price (+ optional name) → Calculate →
+Results Modal:
   - Work Hours: "X hours of work"
-  - Investment Value: "Worth $Y in Z years"
-  - Actions: [Buy] [Don't Buy] [Let Me Think]
+  - Investment Value: "Worth $Y in 10 years"
+  - Actions: [Buy] [Don't Buy] [Save] [Let Me Think]
+  
+If "Let Me Think" selected:
+  → Set Reminder Time → Save to Database →
+  → Appears on Home Tab with countdown timer
+```
+
+### Home Dashboard Flow
+```
+Home Tab (on app open or tab switch):
+  → Fetch user decisions from database
+  → Calculate totals (saved money, saved hours)
+  → Display Stats Cards
+  → Query active "Let Me Think" items
+  → Display timer cards with countdown
+  → Show random/rotating saving tip
 ```
 
 ## Key Product Principles
