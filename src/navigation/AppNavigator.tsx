@@ -1,9 +1,9 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
 import SpendingScreen from '../screens/SpendingScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import { colors } from '../constants/theme';
 
 export type RootTabParamList = {
   Home: undefined;
@@ -15,20 +15,20 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 
 const AppNavigator: React.FC = () => {
   return (
-    <NavigationContainer>
-      <Tab.Navigator
+    <Tab.Navigator
         screenOptions={{
-          tabBarActiveTintColor: '#007AFF',
-          tabBarInactiveTintColor: '#8E8E93',
+          tabBarActiveTintColor: colors.accent,
+          tabBarInactiveTintColor: colors.inactive,
           tabBarStyle: {
             paddingBottom: 5,
             paddingTop: 5,
             height: 60,
+            backgroundColor: colors.background,
           },
           headerStyle: {
-            backgroundColor: '#007AFF',
+            backgroundColor: colors.dark,
           },
-          headerTintColor: '#fff',
+          headerTintColor: colors.textLight,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -59,7 +59,6 @@ const AppNavigator: React.FC = () => {
           }}
         />
       </Tab.Navigator>
-    </NavigationContainer>
   );
 };
 

@@ -1,81 +1,117 @@
 # Active Context: Save Up
 
 ## Current Work Focus
-**Status**: Phase 1 Complete - Foundation Built with TypeScript
+**Status**: Phase 3 Complete - Onboarding Flow Fully Implemented ✅
 
 We have just completed:
-1. ✅ Created complete Memory Bank structure
-2. ✅ Initialized Expo project with TypeScript
-3. ✅ Set up project folder structure
-4. ✅ Installed all core dependencies
-5. ✅ Created navigation with 3 tabs
-6. ✅ Built placeholder screens (TypeScript)
-7. ✅ Implemented calculation utilities (fully typed)
-8. ✅ Created README documentation
+1. ✅ Complete onboarding flow with 4 screens (Welcome, Salary Input, Questionnaire, Results)
+2. ✅ Real-time hourly wage calculator with smooth animations
+3. ✅ Swipe-based questionnaire with 7 questions for spending personality assessment
+4. ✅ Database schema extended with onboarding fields
+5. ✅ Smart navigation flow that checks onboarding_completed status
+6. ✅ Info modal explaining hourly wage calculation
+7. ✅ Fully tested onboarding → home transition working perfectly
 
-## Recent Changes
-- **Converted project to TypeScript** (user request)
-  - Installed TypeScript and type definitions
-  - Configured tsconfig.json for Expo
-  - Converted all files from .js to .tsx/.ts
-  - Added proper type exports and interfaces
-- **Created App.tsx** - Main entry with URL polyfill
-- **Built src/navigation/AppNavigator.tsx** - Tab navigation with typed routes
-- **Created 3 screens** - HomeScreen, SpendingScreen, ProfileScreen (all TypeScript)
-- **Implemented src/utils/calculations.ts** - All calculation logic with TypeScript types
-- **Created src/constants/index.ts** - Constants with type exports
-- **Generated README.md** - Complete project documentation
+## Recent Changes (Phase 3: Onboarding Flow)
+
+- **Onboarding Screens Created**
+  - `WelcomeScreen.tsx` - Intro with app features and emoji
+  - `SalaryInputScreen.tsx` - Complex form with region/currency pickers, salary type toggle, real-time hourly wage calculation
+  - `QuestionnaireScreen.tsx` - Swipe-based card interface with PanResponder for 7 spending personality questions
+  - `ResultsScreen.tsx` - Personalized feedback based on questionnaire score with loading state
+  
+- **Database Schema Extended**
+  - Created `dbscripts/03_onboarding_fields.sql`
+  - Added 5 new columns: currency, region, questionnaire_score, questionnaire_answers (JSONB), onboarding_completed
+  - Successfully executed in Supabase
+
+- **Navigation Architecture Enhanced**
+  - Created `OnboardingNavigator.tsx` with stack navigation
+  - App.tsx now checks onboarding_completed status via Supabase
+  - Conditional navigation: Auth → Onboarding → App
+  - Global refresh trigger pattern for immediate state updates after onboarding completion
+  
+- **Data Constants & Logic**
+  - `src/constants/regions.ts` - 10 currencies, 13 regions with helper functions
+  - `src/constants/questionnaire.ts` - 7 questions with scoring logic (0-2=low, 3=moderate, 4+=high)
+  - Real-time hourly wage calculation in SalaryInputScreen
+  
+- **UX Enhancements**
+  - Smooth fade-in/scale animations for questionnaire questions
+  - Intro loading screen ("Let's see your spending type") with animated dots
+  - Compact hourly wage display with fade-in animation
+  - Info modal explaining calculation formula (tap ⓘ icon)
+  - KeyboardAvoidingView for proper keyboard handling
+  - Auto-scroll when hourly wage appears
+  
+- **Swipe Gesture Implementation**
+  - PanResponder with 25% screen width threshold
+  - Background color feedback (red for No, teal for Yes)
+  - Fixed closure issue with useRef for current state
+  - Smooth card animations between questions
+  
+- **Bug Fixes & Optimizations**
+  - Fixed onboarding completion redirect with global refresh trigger
+  - Fixed swipe gestures not working after first question (ref pattern)
+  - Fixed keyboard blocking content (KeyboardAvoidingView + ScrollView)
+  - Fixed cluttered questionnaire UI (removed overlapping text)
+  - Made hourly wage calculation compact to avoid scrolling
+  - Added loading spinner on "Start Saving Smart" button
 
 ## Next Steps
 
-### Immediate Actions (Phase 2: Supabase & Authentication)
-1. **Set Up Supabase** - NEXT PRIORITY
-   - Create Supabase project
-   - Configure authentication providers (email/password)
-   - Set up database schema (user_profiles table)
-   - Add environment variables (.env file)
-   - Create src/config/supabase.ts
+### Immediate Actions (Phase 4: Main App Features) - NEXT PRIORITY
+1. **Home Screen Implementation**
+   - Display user's hourly wage with currency
+   - Show personalized greeting with user's spending personality
+   - Add quick stats (based on questionnaire results)
+   - Create ProfileContext to fetch user data from database
+   
+2. **Spending Calculator Screen**
+   - Build price input form with currency symbol
+   - Add "Calculate" button
+   - Create results modal/sheet showing:
+     - Work hours required
+     - Investment value (10 years at 7% return)
+   - Add decision buttons (Buy/Don't Buy/Save)
+   - Animate results appearance
 
-2. **Implement Authentication**
-   - Build LoginScreen.tsx
-   - Build SignupScreen.tsx
-   - Create AuthContext.tsx with TypeScript types
-   - Add protected route logic
-   - Update navigation to handle auth state
+3. **Profile Screen**
+   - Display current salary, currency, region
+   - Show hourly wage calculation
+   - Add "Edit Profile" functionality
+   - Show questionnaire results with option to retake
+   - Add logout button
+   
+4. **Profile Context & Data Management**
+   - Create `ProfileContext.tsx` for global profile state
+   - Implement `useProfile` hook
+   - Fetch profile from Supabase on app load
+   - Cache profile data
+   - Handle profile updates
 
-3. **Profile Screen Development**
-   - Build salary input form
-   - Add monthly/annual toggle
-   - Create ProfileContext.tsx
-   - Connect to Supabase user_profiles
-   - Display calculated hourly wage
+### Phase 5: Polish & Additional Features
+5. **UI/UX Refinements**
+   - Add loading states
+   - Improve error messages
+   - Add haptic feedback for decisions
+   - Polish animations
 
-### Phase 2: Core Features
-5. **Build Calculator Logic**
-   - Implement hourly wage calculation
-   - Create work hours calculation
-   - Add investment calculation
-
-6. **Build Spending Screen**
-   - Input form for item cost
-   - Calculate button
-   - Results modal/popup
-
-7. **Build Profile Screen**
-   - Salary input form
-   - Monthly/annual toggle
-   - Display calculated hourly wage
-
-8. **Add Google OAuth**
+6. **Add Google OAuth** (Optional for MVP)
    - Configure Google OAuth in Supabase
-   - Add Google sign-in button
+   - Add Google sign-in button to auth screens
    - Test OAuth flow
 
-### Phase 3: Polish & Testing
-9. **UI/UX Refinement**
-10. **Error Handling**
-11. **Testing on iOS and Android**
-12. **Documentation finalization**
+7. **Testing & Bug Fixes**
+   - Test all flows end-to-end
+   - Test on iOS and Android
+   - Fix edge cases
+   - Performance optimization
+
+8. **Documentation**
+   - Update README with setup instructions
+   - Add screenshots
+   - Document environment setup
 
 ## Active Decisions & Considerations
 
@@ -89,8 +125,9 @@ We have just completed:
 - ✅ Investment calculation: 7% annual return over 10 years (simple compound)
 
 ### Pending Decisions
-- [ ] Whether to track decision history in MVP
-- [ ] Styling approach: Currently using StyleSheet (can enhance later)
+- [ ] Whether to track decision history in MVP (defer to Phase 4)
+- [ ] Should user set salary immediately after signup, or allow skip?
+- [ ] Display format for hourly wage (per hour vs per day vs per month)
 - [ ] Error tracking/analytics tools (defer to post-MVP)
 - [ ] Testing framework (defer to post-MVP)
 
@@ -103,6 +140,8 @@ We have just completed:
 - Separate business logic from UI
 - Use custom hooks for shared logic
 - Export types alongside constants (e.g., `SalaryType`, `DecisionType`)
+- Use `useRef` for values needed in closures (e.g., PanResponder)
+- Wrap sections in View components with consistent styling
 
 ### File Organization
 - Group by feature/domain in `src/` directory
@@ -110,12 +149,34 @@ We have just completed:
 - All utilities/configs use `.ts` extension
 - Type definitions exported from same file as implementation
 - Keep screens simple (delegate to components)
+- Onboarding screens in `src/screens/onboarding/` subdirectory
+
+### Animation Patterns
+- Use `Animated.Value` for smooth transitions
+- Combine animations with `Animated.parallel()` for simultaneous effects
+- Use `Animated.spring()` for natural feel, `Animated.timing()` for controlled speed
+- Always set `useNativeDriver: false` when animating layout properties
+- Add fade + scale animations for new content appearing
+- Use `interpolate` for derived animation values
+
+### State Management Patterns
+- Use refs (`useRef`) to track current values in event handlers
+- Sync refs with state via `useEffect` for PanResponder closures
+- Create global refresh triggers via exported refs when needed
+- Use `useCallback` for functions passed to useEffect dependencies
+
+### Keyboard Handling
+- Always wrap forms in `KeyboardAvoidingView`
+- Use `Platform.OS` to set behavior (iOS='padding', Android='height')
+- Add `keyboardShouldPersistTaps="handled"` to ScrollView
+- Position important content above keyboard area or enable scrolling
 
 ### Calculation Approach
 - All calculations client-side
 - Simple, transparent formulas
 - Round display values appropriately
 - Handle edge cases (zero salary, negative numbers)
+- Show real-time calculations for immediate feedback
 
 ## Learnings & Project Insights
 
@@ -148,7 +209,7 @@ We have just completed:
 - Google Play deployment requires Google Play Developer account ($25 one-time)
 
 ## Current Blockers
-- **None** - Foundation complete, ready for Supabase setup
+- **None** - Authentication working, ready for profile and calculator features
 
 ## Notes for Future Sessions
 - Remember: This is an MVP - focus on core calculator functionality first
