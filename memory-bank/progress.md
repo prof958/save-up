@@ -1,10 +1,10 @@
 # Progress: Save Up
 
-## Project Status: Home Screen Complete
+## Project Status: Spending Calculator Complete
 
-**Current Phase**: Phase 4 Complete - Home Screen Dashboard Fully Implemented ✅
+**Current Phase**: Phase 5 In Progress - Spending Calculator & Decision Tracking Complete ✅
 **Last Updated**: 2025-01-29
-**Overall Progress**: 75% (Foundation, authentication, onboarding, and home screen complete)
+**Overall Progress**: 85% (Foundation, authentication, onboarding, home screen, and spending calculator complete)
 
 ## What Works
 ✅ **Memory Bank Created**
@@ -152,6 +152,41 @@
 - SavingTip interface (id, title, tip, emoji)
 - Helper functions: getRandomTip(), getTipById(id)
 
+✅ **Spending Calculator Screen (Phase 5) - NEW**
+- Price input form with optional item name field
+- Real-time hourly wage display from ProfileContext
+- Calculate button with input validation
+- Preview section showing calculated work hours and investment value
+- Clear button to reset form
+- Responsive design with Platform-specific padding
+
+✅ **Results Modal (Phase 5) - NEW**
+- Bottom sheet modal showing calculation results
+- Work Hours Required card (⏱)
+- Investment Value card (📈) - 10 years at 7% annual return
+- Reflection message promoting mindful decision-making
+- Three decision buttons:
+  - Buy (Teal) - Closes modal
+  - Don't Buy (Red) - Clears form
+  - Let Me Think (Outline) - Opens RemindersModal
+
+✅ **Reminders Modal (Phase 5) - NEW**
+- Timer selection section with 4 chip options:
+  - 24 hours, 48 hours, 72 hours, 1 week
+- Item name input ("Thinking on") with helper text
+- Shopping category tags (12 categories in chip form):
+  - Electronics, Fashion, Home & Garden, Sports & Outdoors, Books
+  - Beauty & Personal Care, Food & Grocery, Entertainment, Toys & Games
+  - Automotive, Health & Wellness, Office Supplies
+- Summary section displaying selected options
+- Form validation (item name + at least one category required)
+- Save button that:
+  - Saves decision to AsyncStorage with ISO timestamp
+  - Syncs stats to Supabase
+  - Refreshes user profile
+  - Clears calculator
+- Cancel button returns without saving
+
 ## What's Left to Build
 
 ### Phase 1: Foundation ✅ COMPLETE
@@ -222,15 +257,15 @@
 - [x] Handle empty state for new users
 - [x] Polish responsive padding for iOS/Android
 
-**Spending Calculator** NOT STARTED
-- [ ] Build SpendingScreen UI
-- [ ] Create price input form
-- [ ] Implement work hours calculation (using user's hourly wage)
-- [ ] Implement investment calculation (7% over 10 years)
-- [ ] Build results modal/sheet with animations
-- [ ] Add decision buttons (Buy/Don't Buy/Save/Let Me Think)
-- [ ] Handle button actions
-- [ ] Add input validation
+**Spending Calculator** ✅ COMPLETE
+- [x] Build SpendingScreen UI
+- [x] Create price input form
+- [x] Implement work hours calculation (using user's hourly wage)
+- [x] Implement investment calculation (7% over 10 years)
+- [x] Build results modal/sheet with animations
+- [x] Add decision buttons (Buy/Don't Buy/Let Me Think)
+- [x] Create RemindersModal with timer chips and category tags
+- [x] Add form validation
 
 **Profile Screen** NOT STARTED
 - [ ] Display current salary, currency, region
@@ -239,9 +274,9 @@
 - [ ] Show questionnaire results with option to retake
 - [ ] Add logout button
 
-**Estimated Completion**: 6-8 hours (phase 4 complete minus spend/profile screens)
+**Estimated Completion**: 6-8 hours (phase 4 complete + spending calculator complete)
 
-**Actual Time Spent**: ~4 hours (database design, DecisionStorage, ProfileContext, HomeScreen polish)
+**Actual Time Spent**: ~8 hours (database, contexts, home screen, spending calculator phases)
 
 ### Phase 5: Polish & Additional Features (Not Started)
 - [ ] Add loading states throughout app
@@ -306,9 +341,10 @@
 - **Priority**: High (users need to view/edit profile)
 
 ### Spending Calculator
-- **Status**: Not Started
-- **Complexity**: Medium (calculations ready, needs UI and results modal)
-- **Priority**: High (core feature)
+- **Status**: ✅ Complete and fully functional
+- **Complexity**: Medium (forms, modals, validation, AsyncStorage integration)
+- **Files**: SpendingScreen.tsx, ResultsModal.tsx, RemindersModal.tsx (in src/components/calculator/)
+- **Features**: Price input, work hours + investment calculations, 3 decision buttons, timer/category selection, form validation
 
 ### Google OAuth
 - **Status**: Not Started
@@ -357,24 +393,25 @@ This keeps the project achievable and testable quickly, with clear paths for enh
 - Works on iOS 13+ and Android 5.0+
 
 ## Next Session Priorities
-1. **Build Spending Calculator Screen**: Price input form with real-time calculations
-2. **Create Results Modal**: Show work hours + investment value with decision buttons
-3. **Implement Decision Tracking**: Connect buttons to AsyncStorage + Supabase sync
-4. **Build Profile Screen**: Display user info, edit functionality, logout
-5. **Add Polish**: Loading states, error messages, animations
-6. **Test End-to-End**: Complete flow from input to decision tracking to home screen updates
+1. **Build Profile Screen**: Display and edit user salary, currency, region - show questionnaire results
+2. **Connect Buy/Don't Buy buttons**: Save decisions to AsyncStorage (without "Let Me Think")
+3. **Update Home Screen with real data**: Pull decisions from AsyncStorage to populate stats and reminders
+4. **Add animations**: Modal transitions and button interactions
+5. **Test end-to-end flow**: Complete user journey from calculator to home screen updates
+6. **Polish & refinements**: Error handling, edge cases, haptic feedback
 
 ## Development Time Estimate
 **Total MVP Time**: ~25-30 hours
-**Time Spent So Far**: ~15 hours (Phases 1-4 complete)
-**Remaining**: ~10-15 hours
+**Time Spent So Far**: ~19 hours (Phases 1-5 complete except Profile Screen)
+**Remaining**: ~6-11 hours
 
 **Progress Breakdown**:
 - Phase 1 (Foundation): 2 hours ✅
 - Phase 2 (Authentication): 3 hours ✅
 - Phase 3 (Onboarding): 6 hours ✅
 - Phase 4 (Home Screen): 4 hours ✅
-- Phase 5 (Spending Calculator & Profile): 6-8 hours (estimated)
-- Phase 6 (Polish): 3-4 hours (estimated)
-- Phase 7 (Google OAuth): 2-3 hours (optional)
-- Phase 8 (Testing & Deployment): 4-6 hours (estimated)
+- Phase 5 (Spending Calculator): 4 hours ✅
+- Phase 6 (Profile Screen & Integration): 3-4 hours (estimated)
+- Phase 7 (Polish & Polish): 2-3 hours (estimated)
+- Phase 8 (Google OAuth): 2-3 hours (optional)
+- Phase 9 (Testing & Deployment): 4-6 hours (estimated)

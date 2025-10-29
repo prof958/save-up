@@ -1,19 +1,134 @@
 # Active Context: Save Up
 
 ## Current Work Focus
-**Status**: Phase 4 Complete - Home Screen Dashboard & UI Redesign ✅
+**Status**: Phase 6 Complete - Currency Localization, Profile Screen, UI Polish ✅
 
 We have just completed:
-1. ✅ Database schema extended with spending decision stats columns (7 aggregation fields)
-2. ✅ DecisionStorage utility for local AsyncStorage management + Supabase sync
-3. ✅ ProfileContext for global user profile data management
-4. ✅ Complete Home Screen dashboard with card-based layout
-5. ✅ Three horizontal-scrolling carousels: Stats, Reminders (with timers), and Money Tips
-6. ✅ UI redesign to friendly/professional aesthetic (white headers, reduced emojis, Ionicons)
-7. ✅ NavBar refinement with proper responsive padding (95px iOS, 75px Android)
-8. ✅ All UI polish and responsive layout for both platforms
+1. ✅ Spending Calculator Screen (SpendingScreen.tsx) with price input and preview
+2. ✅ Results Modal (ResultsModal.tsx) showing work hours + investment value with 3 buttons
+3. ✅ Reminders Modal (RemindersModal.tsx) with timer chips, item name, and shopping category tags
+4. ✅ Complete decision flow integration with AsyncStorage + Supabase sync
 
-## Recent Changes (Phase 4: Home Screen Dashboard & UI Redesign)
+## Recent Changes (Phase 6: Currency Localization & UI Polish - CURRENT)
+
+**Currency Utility** (`src/utils/currency.ts` - NEW)
+- Created getCurrencySymbol() to get symbol from currency code
+- formatCurrencyWithCode() - formats amount with user's currency symbol
+- formatCompactCurrencyWithCode() - compact format (K/M) with user's currency
+- All currency displays now respect user's selected currency from profile
+
+**Profile Screen Complete** (`src/screens/ProfileScreen.tsx` - MAJOR UPDATE)
+- Complete profile management interface with modal-based editing
+- Salary Information card displaying salary amount, type, hourly wage, currency, region
+- Edit functionality with currency picker and salary type toggle
+- Spending Personality display based on questionnaire score
+- Lifetime Stats showing money saved, time saved, total decisions, counts by type
+- Settings section with Privacy Policy and About modals
+- Privacy Policy explains local-first storage approach
+- Sign Out functionality moved to header (in AppNavigator)
+
+**Navigation Updates** (`src/navigation/AppNavigator.tsx` - UPDATED)
+- Added Sign Out button to Profile screen header (headerRight)
+- Moved sign out logic to navigator for cleaner separation
+- Home screen header hidden to allow custom header with logo
+
+**Logo Component Live** (`src/components/shared/Logo.tsx` - ACTIVATED)
+- Logo.png now integrated and displaying
+- Removed placeholder emoji, now using actual logo
+- Logo in HomeScreen header with "Save Up" text
+- App icon, splash screen, and favicon updated in app.json
+- App name changed from "save-up-temp" to "Save Up"
+- Logo component ready for reuse in other screens (WelcomeScreen, AuthScreens, etc.)
+
+**App Configuration Updated** (`app.json` - UPDATED)
+- icon: Now points to `./assets/logo.png`
+- splash image: Now points to `./assets/logo.png`
+- adaptiveIcon foregroundImage: Now points to `./assets/logo.png`
+- web favicon: Now points to `./assets/logo.png`
+- App name: "Save Up"
+- App slug: "save-up"
+
+## Recent Changes (Phase 6: Currency Localization & UI Polish - COMPLETE)
+- HomeScreen: All currency displays use formatCurrencyWithCode
+- SpendingScreen: Currency symbol in price input uses getCurrencySymbol
+- ResultsModal: Price and investment value use user's currency
+- RemindersModal: Price summary uses user's currency  
+- LetMeThinkScreen: Price summary uses user's currency
+- SalaryInputScreen: Hourly wage display uses comma formatting
+
+**Time Display Fix** (`src/utils/calculations.ts` - FIXED)
+- formatCompactHours now always shows hours (0.0 hrs) instead of minutes
+- Consistent "hrs" suffix for all time displays
+
+## Recent Changes (Phase 5: Spending Calculator & Decision Tracking - COMPLETE)
+
+**Spending Calculator Screen** (`src/screens/SpendingScreen.tsx` - NEW)
+- Price input form with optional item name field
+- Real-time display of user's hourly wage from ProfileContext
+- Calculate button that validates input and shows preview
+- Preview section displaying:
+  - Item name
+  - Price
+  - Work hours required
+  - Investment value in 10 years at 7% return
+- Clear button to reset form (only visible when form has content)
+- Responsive layout with Platform-specific bottom padding
+
+**Results Modal** (`src/components/calculator/ResultsModal.tsx` - NEW)
+- Bottom sheet modal displaying calculation results
+- Item name and price header
+- Two information cards:
+  1. Work Hours Required (⏱) - Shows hours/minutes breakdown
+  2. Investment Value (📈) - Shows 10-year compound interest value
+- Reflection message: "Take a moment to decide: Is this worth your time and future?"
+- Three decision buttons:
+  1. **Buy** (Teal #2ec4b6) - Acknowledges purchase, closes modal
+  2. **Don't Buy** (Red #e71d36) - Decides against purchase, clears form
+  3. **Let Me Think** (Outline teal) - Opens RemindersModal for deferred decision
+
+**Reminders Modal (Let Me Think Form)** (`src/components/calculator/RemindersModal.tsx` - NEW)
+- Timer selection section with 4 chip options: 24 hours, 48 hours, 72 hours, 1 week
+- Item name input ("Thinking on") with helper text
+- Shopping category tags (12 categories in chip form):
+  - Electronics, Fashion, Home & Garden, Sports & Outdoors, Books
+  - Beauty & Personal Care, Food & Grocery, Entertainment, Toys & Games
+  - Automotive, Health & Wellness, Office Supplies
+- Multiple tag selection (user can select 1+ categories)
+- Summary section showing selected options
+- Form validation (item name required, at least one category required)
+- Save button that:
+  - Saves decision to AsyncStorage with ISO timestamp
+  - Syncs stats to Supabase
+  - Refreshes user profile
+  - Clears calculator form
+- Cancel button returns without saving
+
+## Phase 4 Changes (Home Screen Dashboard & UI Redesign)
+
+**Database Schema Extended**
+- Created `dbscripts/04_spending_decisions.sql`
+- Added 7 stats columns to user_profiles table for aggregation
+
+**DecisionStorage Utility** (`src/utils/decisionStorage.ts`)
+- AsyncStorage CRUD operations for spending decisions (local-first pattern)
+- Privacy-focused: decisions stay on device, only stats sync to Supabase
+
+**ProfileContext** (`src/contexts/ProfileContext.tsx`)
+- Global user profile data management
+- `useProfile()` hook for profile data access
+
+**Saving Tips Constants** (`src/constants/savingTips.ts`)
+- 20 curated money-saving tips for Home Screen carousel
+
+**Home Screen Complete Redesign** (`src/screens/HomeScreen.tsx`)
+- Dashboard with 3 horizontal-scrolling carousels
+- Stats, Reminders with timers, Money Tips
+- Pull-to-refresh functionality
+
+**AppNavigator UI Polish** (`src/navigation/AppNavigator.tsx`)
+- White headers with dark text (professional aesthetic)
+- Ionicons for tab navigation
+- Proper responsive padding
 
 **Database Schema Extended**
 - Created `dbscripts/04_spending_decisions.sql`
@@ -85,9 +200,31 @@ We have just completed:
 
 ## Next Steps
 
-### Immediate Actions (Phase 5: Spending Calculator) - NEXT PRIORITY
+### Immediate Actions (Phase 7: Polish & Testing) - NEXT PRIORITY
 
-1. **Build Spending Calculator Screen** (SpendingScreen.tsx)
+1. **Testing**
+   - Test on iOS and Android
+   - Verify logo displays correctly in all sizes
+   - Test currency display with different regions
+   - Verify sign out flow
+   - Check number formatting with large amounts
+
+2. **Optional Enhancements**
+   - Add logo to Welcome/Onboarding screens
+   - Add logo to Login/Signup screens
+   - Add logo to Profile screen header
+   - Add animations/transitions
+   - Add haptic feedback for decisions
+
+3. **Deployment Preparation**
+   - Create app store listing
+   - Generate app screenshots
+   - Test Google OAuth
+   - Prepare privacy policy link
+
+### Completed (Phases 1-6) ✅
+
+1. **Build Spending Calculator Screen** (SpendingScreen.tsx) ✅
    - Create price input form with optional item name field
    - Add currency symbol display and formatting
    - Implement "Calculate" button
@@ -114,24 +251,30 @@ We have just completed:
    - Refresh Home Screen stats after decision saved
    - Show confirmation toast/feedback
 
-4. **Build Profile Screen** (ProfileScreen.tsx)
-   - Display current salary, currency, region
-   - Show hourly wage calculation
-   - Add "Edit Profile" button
-   - Show questionnaire results with option to retake
-   - Display lifetime stats from user_profiles:
-     - Total money saved
-     - Total hours saved
-     - Decision counts (buy, don't buy, save, let me think)
-   - Add logout button with confirmation
-   - Edit modal/screen for salary/currency/region changes
+4. **Build Profile Screen** (ProfileScreen.tsx) ✅
+   - ✅ Display current salary, currency, region
+   - ✅ Show hourly wage calculation
+   - ✅ Add "Edit Profile" functionality with modal
+   - ✅ Show questionnaire results (spending personality)
+   - ✅ Display lifetime stats from user_profiles
+   - ✅ Add logout button in header
+   - ✅ Edit modal with currency picker and salary type toggle
+   - ✅ Privacy Policy and About modals
 
-### Phase 5: Polish & Additional Features
-5. **UI/UX Refinements**
-   - Add loading states
-   - Improve error messages
-   - Add haptic feedback for decisions
-   - Polish animations
+### Phase 6: Currency Localization & UI Polish ✅
+5. **Currency Localization** ✅
+   - ✅ Created currency utility functions
+   - ✅ Updated all money displays to use user's currency
+   - ✅ Fixed currency symbol display in price inputs
+   - ✅ All formatting uses comma separators (2,000.00)
+
+6. **UI/UX Refinements** ✅
+   - ✅ Sign Out moved to Profile header
+   - ✅ Logo component created and integrated
+   - ✅ Logo.png now active and displaying
+   - ✅ App configuration updated with logo
+   - ✅ Time display fixed (always shows hours)
+   - ✅ Number formatting consistent throughout app
 
 6. **Add Google OAuth** (Optional for MVP)
    - Configure Google OAuth in Supabase

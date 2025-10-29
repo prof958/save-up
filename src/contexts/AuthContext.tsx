@@ -53,6 +53,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Note: We don't clear the cache on logout because:
+    // 1. Stats are stored in Supabase and will sync on next login
+    // 2. User might log back in and want their cached decisions
+    // 3. AsyncStorage keys are user-specific, so no data leakage between accounts
     await supabase.auth.signOut();
   };
 

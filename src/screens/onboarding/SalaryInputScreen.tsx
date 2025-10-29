@@ -239,7 +239,7 @@ const SalaryInputScreen: React.FC<SalaryInputScreenProps> = ({ onContinue }) => 
                 <View style={styles.calculationRow}>
                   <Text style={styles.calculationLabel}>Hourly Wage: </Text>
                   <Text style={styles.calculationValueCompact}>
-                    {selectedCurrencyInfo?.symbol}{hourlyWage.toFixed(2)}/hr
+                    {selectedCurrencyInfo?.symbol}{hourlyWage.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}/hr
                   </Text>
                   <Text style={styles.infoIcon}> ⓘ</Text>
                 </View>

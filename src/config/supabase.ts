@@ -64,6 +64,7 @@ export interface SpendingDecision {
   decision_type: DecisionType;
   remind_at: string | null; // ISO timestamp for "let_me_think" reminders
   created_at: string; // ISO timestamp
+  categories?: string[]; // Selected categories/tags
 }
 
 export interface Database {

@@ -2,7 +2,30 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SpendingDecision, DecisionType } from '../config/supabase';
 import { supabase } from '../config/supabase';
 
-const DECISIONS_STORAGE_KEY = '@save_up_decisions';
+/**
+ * ARCHITECTURE NOTE:
+ * - Individual spending decisions are stored locally in AsyncStorage (user-specific keys)
+ * - Aggregate stats (totals, counts) are synced to Supabase user_profiles table
+ * - On logout, we DON'T clear the cache because:
+ *   1. Stats are stored in Supabase and will sync on next login
+ *   2. User might log back in and want their cached decisions
+ *   3. AsyncStorage keys are user-specific (@save_up_decisions_{user_id}), so no data leakage
+ * - ProfileContext fetches stats from Supabase on login/app start
+ * - Local decisions are for offline support and detailed history
+ */
+
+const DECISIONS_STORAGE_KEY_PREFIX = '@save_up_decisions_';
+
+/**
+ * Get the storage key for the current user
+ */
+const getStorageKey = async (): Promise<string> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('No authenticated user');
+  }
+  return `${DECISIONS_STORAGE_KEY_PREFIX}${user.id}`;
+};
 
 // Stats interface for calculations
 export interface DecisionStats {
@@ -27,7 +50,8 @@ const generateId = (): string => {
  */
 export const loadDecisions = async (): Promise<SpendingDecision[]> => {
   try {
-    const decisionsJson = await AsyncStorage.getItem(DECISIONS_STORAGE_KEY);
+    const storageKey = await getStorageKey();
+    const decisionsJson = await AsyncStorage.getItem(storageKey);
     if (!decisionsJson) return [];
     
     const decisions: SpendingDecision[] = JSON.parse(decisionsJson);
@@ -45,6 +69,7 @@ export const saveDecision = async (
   decision: Omit<SpendingDecision, 'id' | 'created_at'>
 ): Promise<SpendingDecision> => {
   try {
+    const storageKey = await getStorageKey();
     const decisions = await loadDecisions();
     
     const newDecision: SpendingDecision = {
@@ -54,7 +79,7 @@ export const saveDecision = async (
     };
     
     decisions.push(newDecision);
-    await AsyncStorage.setItem(DECISIONS_STORAGE_KEY, JSON.stringify(decisions));
+    await AsyncStorage.setItem(storageKey, JSON.stringify(decisions));
     
     // Sync stats to Supabase in background (don't await)
     syncStatsToSupabase(decisions).catch(err => 
@@ -76,12 +101,13 @@ export const updateDecision = async (
   updates: Partial<SpendingDecision>
 ): Promise<void> => {
   try {
+    const storageKey = await getStorageKey();
     const decisions = await loadDecisions();
     const index = decisions.findIndex(d => d.id === decisionId);
     
     if (index !== -1) {
       decisions[index] = { ...decisions[index], ...updates };
-      await AsyncStorage.setItem(DECISIONS_STORAGE_KEY, JSON.stringify(decisions));
+      await AsyncStorage.setItem(storageKey, JSON.stringify(decisions));
       
       // Sync stats to Supabase in background
       syncStatsToSupabase(decisions).catch(err => 
@@ -99,9 +125,10 @@ export const updateDecision = async (
  */
 export const deleteDecision = async (decisionId: string): Promise<void> => {
   try {
+    const storageKey = await getStorageKey();
     const decisions = await loadDecisions();
     const filtered = decisions.filter(d => d.id !== decisionId);
-    await AsyncStorage.setItem(DECISIONS_STORAGE_KEY, JSON.stringify(filtered));
+    await AsyncStorage.setItem(storageKey, JSON.stringify(filtered));
     
     // Sync stats to Supabase in background
     syncStatsToSupabase(filtered).catch(err => 
@@ -237,12 +264,28 @@ export const syncStatsToSupabase = async (
  */
 export const clearAllDecisions = async (): Promise<void> => {
   try {
-    await AsyncStorage.removeItem(DECISIONS_STORAGE_KEY);
+    const storageKey = await getStorageKey();
+    await AsyncStorage.removeItem(storageKey);
     
     // Sync empty stats to Supabase
     await syncStatsToSupabase([]);
   } catch (error) {
     console.error('Error clearing decisions:', error);
     throw error;
+  }
+};
+
+/**
+ * Clear all decisions for current user on logout
+ */
+export const clearUserDecisions = async (): Promise<void> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const storageKey = `${DECISIONS_STORAGE_KEY_PREFIX}${user.id}`;
+      await AsyncStorage.removeItem(storageKey);
+    }
+  } catch (error) {
+    console.error('Error clearing user decisions:', error);
   }
 };
