@@ -116,9 +116,10 @@ INDEX on user_id
 INDEX on onboarding_completed
 ```
 
-#### Local AsyncStorage (Phase 4 - Private decisions cache)
+#### Local AsyncStorage (Phase 4 - Private decisions cache, Phase 7 - User-scoped)
 ```typescript
-// Key: "spending_decisions"
+// Key Pattern (Phase 7): "@save_up_decisions_{user_id}" (user-specific, prevents cross-account leakage)
+// Before Phase 7: "@save_up_decisions" (VULNERABLE - shared across all users!)
 // Structure: SpendingDecision[]
 interface SpendingDecision {
   id: string
@@ -129,10 +130,13 @@ interface SpendingDecision {
   decision_type: 'buy' | 'dont_buy' | 'save' | 'let_me_think'
   remind_at: number (milliseconds, for timers)
   created_at: number (milliseconds)
+  categories?: string[] (optional - Phase 7 update)
 }
 
 // User decisions stay on device for privacy
 // Stats calculated locally, synced to user_profiles for backup
+// CRITICAL: Keys are user-scoped to prevent data leakage between accounts
+// Storage key generated via: getStorageKey() function using supabase.auth.getUser()
 ```
 
 ## State Management Pattern
@@ -200,8 +204,8 @@ interface SpendingDecision {
 - Clear mental model
 - Single-level hierarchy (no deep nesting)
 
-### 5. Local-First Decision Storage (Phase 4)
-**Decision**: Store individual decisions in AsyncStorage, sync stats to Supabase
+### 5. Local-First Decision Storage (Phase 4, Enhanced Phase 7)
+**Decision**: Store individual decisions in AsyncStorage with user-scoped keys, sync stats to Supabase
 
 **Reasoning**:
 - Privacy: User decisions stay on device
@@ -209,6 +213,12 @@ interface SpendingDecision {
 - Offline support: Works without internet
 - Cloud backup: Stats synced for multi-device support
 - Efficiency: Only aggregates stored in database
+- Security (Phase 7): User-scoped keys prevent cross-account data leakage
+
+**Critical Implementation Detail (Phase 7)**:
+- Storage keys MUST be scoped per user: `@save_up_decisions_{user_id}`
+- Using shared key across users causes security vulnerability
+- getStorageKey() function fetches current user ID from Supabase auth
 
 ### 6. ProfileContext for Global State (Phase 4)
 **Decision**: Use React Context (not Redux) for user profile management
@@ -220,7 +230,22 @@ interface SpendingDecision {
 - Easier to understand and maintain
 - Built-in React pattern
 
-### 7. Horizontal Carousels for Home Screen (Phase 4)
+### 7. Single Source of Truth for Stats (Phase 7)
+**Decision**: Supabase user_profiles table is the authoritative source for all user stats
+
+**Reasoning**:
+- Prevents inconsistency between HomeScreen and ProfileScreen
+- Eliminates dual calculation logic (local + cloud)
+- Simplifies debugging (one place to check)
+- Reliable across sessions and devices
+- Stats survive cache clearing
+
+**Implementation**:
+- Both HomeScreen and ProfileScreen read from `profile.*` via ProfileContext
+- AsyncStorage stores individual decisions only (for privacy and details)
+- decisionStorage.syncStatsToSupabase() updates aggregates in Supabase after each decision
+
+### 8. Horizontal Carousels for Home Screen (Phase 4)
 **Decision**: Use ScrollView with fixed-width horizontal items instead of grid
 
 **Reasoning**:
@@ -229,6 +254,20 @@ interface SpendingDecision {
 - Can show partial cards (peek to right)
 - More natural for mobile scrolling
 - Easier to add more items without restructuring
+
+### 9. Generated Columns Exclusion (Phase 7)
+**Decision**: Never include GENERATED ALWAYS columns in UPDATE statements
+
+**Reasoning**:
+- Database constraint: Generated columns auto-calculate based on other columns
+- Attempting to UPDATE causes error: "Column can only be updated to DEFAULT"
+- hourly_wage is GENERATED from salary_amount and salary_type
+- Solution: Exclude from all updateProfile() calls, let database calculate
+
+**Implementation**:
+- ProfileScreen update excludes hourly_wage
+- Database formula: salary_amount * 12 / (52 * 40) for monthly, salary_amount / (52 * 40) for annual
+- Value refreshes automatically when salary_amount or salary_type changes
 
 ## Critical Implementation Paths
 
@@ -282,6 +321,12 @@ interface SpendingDecision {
 - **Custom Hooks**: Shared logic (useAuth, useProfile, useCalculator)
 - **Type-Safe Navigation**: Typed param lists for all routes
 - **Const Assertions**: Using `as const` for immutable constants with literal types
+- **User-Scoped Storage Keys** (Phase 7): Prefix + user ID prevents cross-account data leakage
+- **Single Source of Truth** (Phase 7): One authoritative data source (Supabase) prevents inconsistency
+- **Optional Props with Validation** (Phase 7): Make fields optional but validate when needed (categories)
+- **Platform-Specific Behavior** (Phase 7): Different KeyboardAvoidingView behavior for iOS vs Android
+- **Tap-Outside Dismissal** (Phase 7): TouchableWithoutFeedback wrapper for modal UX
+- **Real-Time Input Formatting** (Phase 7): Format as user types (comma insertion) for polish
 
 ### Naming Conventions
 - Components: PascalCase with `.tsx` extension (e.g., `SpendingCalculator.tsx`)

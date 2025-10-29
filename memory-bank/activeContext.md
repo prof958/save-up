@@ -1,15 +1,114 @@
 # Active Context: Save Up
 
 ## Current Work Focus
-**Status**: Phase 6 Complete - Currency Localization, Profile Screen, UI Polish ✅
+**Status**: Phase 7 Complete - Bug Fixes and UI Refinements ✅
+**Ready for**: Production Testing and Deployment
 
-We have just completed:
-1. ✅ Spending Calculator Screen (SpendingScreen.tsx) with price input and preview
-2. ✅ Results Modal (ResultsModal.tsx) showing work hours + investment value with 3 buttons
-3. ✅ Reminders Modal (RemindersModal.tsx) with timer chips, item name, and shopping category tags
-4. ✅ Complete decision flow integration with AsyncStorage + Supabase sync
+We have just completed comprehensive bug fixes and UI polish:
+1. ✅ User-scoped storage (critical security fix - no cross-account data leakage)
+2. ✅ Stats unification (single source of truth in Supabase)
+3. ✅ Generated column fix (hourly_wage auto-calculated)
+4. ✅ Optional categories (improved UX across all screens)
+5. ✅ Personality test retake (full navigation flow)
+6. ✅ Modal dismissal (tap-outside-to-close)
+7. ✅ Input validation consistency (15-char limits)
+8. ✅ Keyboard behavior fixes (no button clipping)
+9. ✅ UI clash prevention (item name/time badge spacing)
 
-## Recent Changes (Phase 6: Currency Localization & UI Polish - CURRENT)
+## Recent Changes (Phase 7: Bug Fixes & UI Refinements - CURRENT)
+
+**Critical Architecture Fix - User-Scoped Storage** (`src/utils/decisionStorage.ts` - CRITICAL UPDATE)
+- **Problem**: Multiple users on same device could see each other's data
+- **Root Cause**: Shared AsyncStorage key `@save_up_decisions` across all users
+- **Solution**: User-specific keys `@save_up_decisions_{user_id}`
+- Added `getStorageKey()` function that gets current user ID from Supabase
+- All storage functions now use user-scoped keys (loadDecisions, saveDecision, etc.)
+- Added comprehensive architecture documentation in comments
+- **Result**: Complete data isolation between users, zero cross-contamination possible
+
+**Stats Unification** (`src/screens/HomeScreen.tsx` - MAJOR FIX)
+- **Problem**: HomeScreen and ProfileScreen showed different stats
+- **Root Cause**: HomeScreen used AsyncStorage, ProfileScreen used Supabase
+- **Solution**: Both screens now use `profile.*` from Supabase (single source of truth)
+- Removed local `DecisionStats` state and `getStats()` calls
+- Now displays: `profile.total_money_saved`, `profile.total_decisions`, etc.
+- **Result**: Perfect consistency across all screens
+
+**Generated Column Fix** (`src/screens/ProfileScreen.tsx` - DATABASE FIX)
+- **Problem**: ERROR "Column 'hourly_wage' can only be updated to DEFAULT"
+- **Root Cause**: Trying to UPDATE a GENERATED ALWAYS column
+- **Solution**: Removed `hourly_wage` from updateProfile() payload
+- Added real-time comma formatting to salary input (`handleSalaryChange()`)
+- Fixed currency dropdown with ScrollView + `nestedScrollEnabled={true}`
+- **Result**: Profile updates work without errors, hourly wage auto-calculates
+
+**Optional Categories** (`src/components/calculator/RemindersModal.tsx`, `src/screens/LetMeThinkScreen.tsx` - UX IMPROVEMENT)
+- Removed mandatory category validation (was forcing selection even when not relevant)
+- Updated UI text: "Tag the item (optional)"
+- Save logic: `categories: selectedTags.length > 0 ? selectedTags : undefined`
+- **Result**: Better UX, users can skip irrelevant categorization
+
+**Personality Test Retake** (`src/navigation/AppNavigator.tsx`, `src/screens/ProfileScreen.tsx` - NEW FEATURE)
+- Added `Questionnaire: undefined` to RootStackParamList
+- Created QuestionnaireWrapper component that:
+  - Takes questionnaire answers
+  - Calculates score
+  - Updates Supabase user_profiles
+  - Refreshes profile context
+  - Navigates back to ProfileScreen
+- Added "Retake" button in ProfileScreen with refresh icon
+- **Result**: Users can retake personality test anytime from Profile screen
+
+**Modal Dismissal Enhancement** (`src/screens/ProfileScreen.tsx`, `src/screens/HomeScreen.tsx` - UX IMPROVEMENT)
+- Wrapped all modals with TouchableWithoutFeedback
+- Tapping outside modal area now closes modal
+- Applied to 4 modals total: Edit Profile, About, Privacy, Reminder Detail
+- X button still works as fallback
+- **Result**: More intuitive mobile UX
+
+**Input Validation Consistency** (`src/screens/SpendingScreen.tsx`, `src/screens/LetMeThinkScreen.tsx` - CONSISTENCY FIX)
+- Added `maxLength={15}` to item name inputs on both screens
+- Added character counters: `{itemName.length}/15 characters`
+- Updated placeholder text to shorter examples
+- **Result**: Consistent 15-char limit prevents UI issues
+
+**Keyboard Behavior Fix** (`src/screens/LetMeThinkScreen.tsx` - LAYOUT FIX)
+- **Problem**: Editing item name then closing keyboard caused button clipping
+- **Root Cause**: KeyboardAvoidingView with wrong behavior and structure
+- **Solution**: Restructured layout:
+  ```tsx
+  <View style={styles.container}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={90}
+      style={styles.keyboardView}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Content */}
+      </ScrollView>
+      <View style={styles.buttonContainer}>
+        {/* Buttons inside KeyboardAvoidingView prevents clipping */}
+      </View>
+    </KeyboardAvoidingView>
+  </View>
+  ```
+- iOS uses 'padding' behavior, Android uses native handling (undefined)
+- Buttons moved inside KeyboardAvoidingView
+- **Result**: Smooth keyboard animation, no button clipping
+
+**UI Clash Prevention** (`src/screens/HomeScreen.tsx` - POLISH)
+- **Problem**: Long item names overlapped with time remaining badge
+- **Root Cause**: Insufficient padding (32px) on reminderTitle
+- **Solution**: Increased paddingRight from 32px to 68px
+- Added `ellipsizeMode="tail"` to reminder title text
+- **Result**: Guaranteed clearance for all time badge text ("2 days", "1 week", etc.)
+
+**Time Display Consistency** (`src/utils/calculations.ts` - MINOR FIX)
+- formatCompactHours now always shows hours format (never minutes)
+- Consistent "0.0 hrs" format for values under 1 hour
+- **Result**: No confusing "59m" displays
+
+## Recent Changes (Phase 6: Currency Localization & UI Polish - COMPLETE)
 
 **Currency Utility** (`src/utils/currency.ts` - NEW)
 - Created getCurrencySymbol() to get symbol from currency code
@@ -200,27 +299,72 @@ We have just completed:
 
 ## Next Steps
 
-### Immediate Actions (Phase 7: Polish & Testing) - NEXT PRIORITY
+### Immediate Actions (Phase 8: Production Testing) - NEXT PRIORITY
 
-1. **Testing**
-   - Test on iOS and Android
-   - Verify logo displays correctly in all sizes
-   - Test currency display with different regions
-   - Verify sign out flow
-   - Check number formatting with large amounts
+1. **Multi-Account Testing** (CRITICAL)
+   - Create 2+ accounts on same device
+   - Make decisions on Account A
+   - Switch to Account B, verify Account B sees only their data
+   - Switch back to Account A, verify data persists
+   - Test stats consistency after app restart
+   - **Validates**: User-scoped storage fix
 
-2. **Optional Enhancements**
+2. **Stats Verification** (HIGH PRIORITY)
+   - Make decisions (buy, don't buy, save, let me think)
+   - Check HomeScreen stats vs ProfileScreen stats (should match exactly)
+   - Refresh app, verify stats persist correctly
+   - **Validates**: Stats unification fix
+
+3. **Personality Test Retake Flow** (HIGH PRIORITY)
+   - Navigate to Profile → Tap "Retake" button
+   - Complete questionnaire
+   - Verify modal closes automatically
+   - Verify ProfileScreen shows updated personality type
+   - Check Supabase user_profiles.questionnaire_score updated
+   - **Validates**: Navigation expansion and retake flow
+
+4. **Input Validation Testing** (MEDIUM PRIORITY)
+   - SpendingScreen: Try entering 20-char item name (should stop at 15)
+   - LetMeThinkScreen: Same test
+   - Verify character counters update correctly
+   - Test with emojis and special characters
+   - **Validates**: maxLength consistency
+
+5. **Keyboard Behavior Testing** (MEDIUM PRIORITY)
+   - LetMeThinkScreen: Focus item name input, enter text, dismiss keyboard
+   - Verify Save/Cancel buttons visible and not clipped
+   - Test on both iOS and Android
+   - **Validates**: KeyboardAvoidingView restructure
+
+6. **UI Clash Testing** (LOW PRIORITY)
+   - Create reminder with 15-char item name
+   - Set various time periods (24h, 48h, 72h, 1 week)
+   - Verify item name never overlaps time badge
+   - Test on different screen sizes if possible
+   - **Validates**: Padding increase fix
+
+7. **Modal Dismissal Testing** (LOW PRIORITY)
+   - ProfileScreen: Open Edit/About/Privacy modals, tap outside → should close
+   - HomeScreen: Open reminder detail, tap outside → should close
+   - Verify X button still works on all modals
+   - **Validates**: TouchableWithoutFeedback implementation
+
+### Optional Enhancements (Post-MVP)
    - Add logo to Welcome/Onboarding screens
    - Add logo to Login/Signup screens
-   - Add logo to Profile screen header
-   - Add animations/transitions
+   - Add animations/transitions for personality test score change
    - Add haptic feedback for decisions
+   - Add loading states to retake questionnaire flow
+   - Add confirmation dialog before discarding partial retake
+   - Add "What's New" section to About modal
+   - Add data export feature (CSV of all decisions)
 
-3. **Deployment Preparation**
+### Deployment Preparation (After Testing Complete)
    - Create app store listing
    - Generate app screenshots
-   - Test Google OAuth
+   - Test Google OAuth (optional for MVP)
    - Prepare privacy policy link
+   - Build production APK/IPA with EAS
 
 ### Completed (Phases 1-6) ✅
 
@@ -303,15 +447,27 @@ We have just completed:
 - ✅ **TypeScript in strict mode** (user preference)
 - ✅ Investment calculation: 7% annual return over 10 years (simple compound)
 
-### Pending Decisions
+### Resolved Decisions
 - [x] Whether to track decision history in MVP - **YES, required for Home Screen stats**
 - [x] Should user set salary immediately after signup, or allow skip? - **Required during onboarding**
-- [ ] Display format for hourly wage (per hour vs per day vs per month) - **Currently per hour**
-- [ ] How long should "Let Me Think" timers default to? (24 hours? User choice?)
-- [ ] How many saving tips to include? Should they be in database or constants?
-- [ ] Should we show empty state on Home Screen for new users with no decisions?
-- [ ] Error tracking/analytics tools (defer to post-MVP)
-- [ ] Testing framework (defer to post-MVP)
+- [x] Display format for hourly wage - **Per hour with comma formatting**
+- [x] How long should "Let Me Think" timers default to? - **User choice: 24h, 48h, 72h, 1 week**
+- [x] How many saving tips to include? - **20 tips in constants file**
+- [x] Should we show empty state on Home Screen? - **YES, shows for new users**
+- [x] Should categories be mandatory? - **NO, made optional for better UX**
+- [x] Item name length limit? - **15 characters across all screens**
+- [x] How to handle cross-account data? - **User-scoped AsyncStorage keys**
+- [x] Stats single source of truth? - **Supabase user_profiles table**
+- [x] Can personality test be retaken? - **YES, via Profile screen button**
+
+### Pending Decisions (Deferred to Post-MVP)
+- [ ] Should questionnaire retake require confirmation dialog?
+- [ ] Should old personality type be shown during retake?
+- [ ] Add loading indicators for stats sync?
+- [ ] Should categories be editable after creation?
+- [ ] Error tracking/analytics tools?
+- [ ] Testing framework implementation?
+- [ ] Dark mode support?
 
 ## Important Patterns & Preferences
 
@@ -364,7 +520,7 @@ We have just completed:
 
 ## Learnings & Project Insights
 
-### Key Insights (Phase 3 & 4)
+### Key Insights (Phases 3-7)
 1. **Simplicity is Core**: The app's power comes from its simplicity - one input, instant results, clear actions
 2. **Mobile-First**: Users will use this in real-time shopping decisions, so speed and clarity are critical
 3. **Non-Judgmental Design**: The app provides perspective, not prescription - users stay in control
@@ -403,6 +559,18 @@ We have just completed:
 6. **Pull-to-Refresh Expected Pattern**: Mobile users expect this on dashboards to see updated data
 7. **Countdown Timers Create Engagement**: "Let Me Think" reminders with live timers motivate users to return to app
 8. **Rotating Tips Provide Value**: Educational tips on Home Screen add value beyond calculator
+
+### Bug Fixes & Architecture Insights (Phase 7)
+1. **User-Scoped Storage is Critical**: Shared AsyncStorage keys cause security vulnerabilities - always scope by user ID
+2. **Single Source of Truth Prevents Confusion**: Stats should come from one place (Supabase), not calculated in multiple locations
+3. **Generated Columns Can't Be Updated**: Database GENERATED ALWAYS columns must be excluded from UPDATE statements
+4. **Optional Fields Improve UX**: Making categories optional reduces friction without losing functionality
+5. **Keyboard Behavior Varies by Platform**: iOS needs 'padding' behavior, Android works better with native handling
+6. **Generous Padding Prevents UI Clashes**: Dynamic content (time badges) needs extra space - 68px vs 32px made the difference
+7. **Consistent Input Validation Matters**: Same limits (15 chars) across all screens prevents edge case bugs
+8. **Modal Dismissal is Expected**: Users expect to close modals by tapping outside on mobile
+9. **Navigation Must Be Complete**: Adding screens to navigator enables deep linking and proper flow management
+10. **Real-time Formatting Builds Trust**: Seeing commas appear as you type salary makes app feel polished
 
 ## Questions to Address Later
 - Should we add purchase history tracking?

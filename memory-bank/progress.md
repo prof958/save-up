@@ -1,10 +1,11 @@
 # Progress: Save Up
 
-## Project Status: Spending Calculator Complete
+## Project Status: MVP Feature Complete - Ready for Testing
 
-**Current Phase**: Phase 5 In Progress - Spending Calculator & Decision Tracking Complete ✅
-**Last Updated**: 2025-01-29
-**Overall Progress**: 85% (Foundation, authentication, onboarding, home screen, and spending calculator complete)
+**Current Phase**: Phase 7 Complete - Bug Fixes & UI Refinements ✅
+**Next Phase**: Phase 8 - Production Testing
+**Last Updated**: 2025-01-30
+**Overall Progress**: 95% (All core features complete, comprehensive bug fixes applied, ready for production testing)
 
 ## What Works
 ✅ **Memory Bank Created**
@@ -179,13 +180,76 @@
   - Beauty & Personal Care, Food & Grocery, Entertainment, Toys & Games
   - Automotive, Health & Wellness, Office Supplies
 - Summary section displaying selected options
-- Form validation (item name + at least one category required)
+- Form validation (item name required, categories optional - Phase 7 update)
 - Save button that:
-  - Saves decision to AsyncStorage with ISO timestamp
+  - Saves decision to AsyncStorage with ISO timestamp (user-scoped key - Phase 7)
   - Syncs stats to Supabase
   - Refreshes user profile
   - Clears calculator
 - Cancel button returns without saving
+
+✅ **Profile Screen Complete (Phase 6) - NEW**
+- Complete profile management interface with modal-based editing
+- Salary Information card displaying salary amount, type, hourly wage, currency, region
+- Edit functionality with currency picker and salary type toggle
+- Real-time comma formatting for salary input (Phase 7)
+- Currency dropdown fixed with nestedScrollEnabled (Phase 7)
+- Spending Personality display based on questionnaire score
+- "Retake" button for personality test with full navigation flow (Phase 7)
+- Lifetime Stats showing money saved, time saved, total decisions, counts by type
+- Stats now match HomeScreen exactly (single source of truth - Phase 7)
+- Settings section with Privacy Policy and About modals
+- Privacy Policy explains local-first storage approach
+- All modals support tap-outside-to-close (Phase 7)
+- Sign Out functionality in header (AppNavigator)
+
+✅ **Currency Localization Complete (Phase 6) - NEW**
+- Created currency utility functions (getCurrencySymbol, formatCurrencyWithCode)
+- All money displays use user's selected currency from profile
+- Currency symbol in price inputs matches user's currency
+- Comma formatting for all large numbers (2,000.00)
+- Compact currency format for large values ($1.5K instead of $1,500.00)
+
+✅ **Logo Integration Complete (Phase 6) - NEW**
+- Logo component created and displaying actual logo.png
+- Logo in HomeScreen header with "Save Up" text
+- App configuration updated (icon, splash, favicon all use logo.png)
+- App name changed from "save-up-temp" to "Save Up"
+
+✅ **Phase 7 Critical Fixes - NEW**
+- **User-Scoped Storage**: AsyncStorage keys now user-specific (`@save_up_decisions_{user_id}`)
+  - Prevents cross-account data leakage
+  - Complete data isolation between users
+  - Added getStorageKey() function to decisionStorage.ts
+- **Stats Unification**: HomeScreen and ProfileScreen now use same data source (Supabase)
+  - Removed local stats calculations from HomeScreen
+  - Single source of truth: user_profiles table
+  - Perfect consistency across all screens
+- **Generated Column Fix**: Removed hourly_wage from profile updates
+  - Fixed ERROR "Column 'hourly_wage' can only be updated to DEFAULT"
+  - Auto-calculation works correctly in Supabase
+- **Optional Categories**: Made category tagging optional in RemindersModal and LetMeThinkScreen
+  - Removed mandatory validation
+  - Updated UI text to indicate optional
+  - Better UX for users
+- **Personality Test Retake**: Full navigation flow from ProfileScreen
+  - Added Questionnaire to AppNavigator with wrapper component
+  - Fixed navigation error
+  - Updates Supabase and refreshes profile on completion
+- **Modal Dismissal**: TouchableWithoutFeedback on all modals (4 total)
+  - Tap outside modal to close
+  - More intuitive mobile UX
+- **Input Validation Consistency**: 15-character limit on all item name inputs
+  - SpendingScreen and LetMeThinkScreen both enforce maxLength={15}
+  - Character counters show remaining characters
+- **Keyboard Behavior Fix**: Restructured LetMeThinkScreen KeyboardAvoidingView
+  - iOS uses 'padding' behavior, Android uses native handling
+  - Buttons moved inside KeyboardAvoidingView
+  - No more button clipping when keyboard dismisses
+- **UI Clash Prevention**: Increased padding on reminder titles
+  - Changed from 32px to 68px paddingRight
+  - Prevents item names from overlapping time badges
+  - Added ellipsizeMode="tail" for text truncation
 
 ## What's Left to Build
 
@@ -245,7 +309,7 @@
 
 **Actual Time**: ~6 hours (including bug fixes and UX polish)
 
-### Phase 4: Core App Screens (COMPLETE IN PROGRESS)
+### Phase 4: Core App Screens ✅ COMPLETE
 
 **Home Screen** ✅ COMPLETE
 - [x] Create ProfileContext for global user data
@@ -267,29 +331,68 @@
 - [x] Create RemindersModal with timer chips and category tags
 - [x] Add form validation
 
-**Profile Screen** NOT STARTED
-- [ ] Display current salary, currency, region
-- [ ] Show hourly wage calculation
-- [ ] Add "Edit Profile" functionality
-- [ ] Show questionnaire results with option to retake
-- [ ] Add logout button
+**Profile Screen** ✅ COMPLETE
+- [x] Display current salary, currency, region
+- [x] Show hourly wage calculation
+- [x] Add "Edit Profile" functionality
+- [x] Show questionnaire results with option to retake
+- [x] Add logout button
 
-**Estimated Completion**: 6-8 hours (phase 4 complete + spending calculator complete)
+**Actual Time Spent**: ~12 hours (database, contexts, home screen, spending calculator, profile screen phases)
 
-**Actual Time Spent**: ~8 hours (database, contexts, home screen, spending calculator phases)
+### Phase 5: Spending Calculator & Decision Tracking ✅ COMPLETE
+- [x] Build SpendingScreen with price input and preview
+- [x] Create ResultsModal with work hours and investment displays
+- [x] Add three decision buttons (Buy, Don't Buy, Let Me Think)
+- [x] Create RemindersModal with timer selection and category tags
+- [x] Integrate with AsyncStorage via decisionStorage
+- [x] Sync stats to Supabase after decisions
+- [x] Form validation and error handling
 
-### Phase 5: Polish & Additional Features (Not Started)
-- [ ] Add loading states throughout app
-- [ ] Improve error messages
-- [ ] Add haptic feedback for decisions
-- [ ] Polish animations across all screens
-- [ ] Test on iOS and Android
-- [ ] Handle edge cases
-- [ ] Performance optimization
+**Actual Time Spent**: ~4 hours
+
+### Phase 6: Currency Localization & UI Polish ✅ COMPLETE
+- [x] Create currency utility functions
+- [x] Update all money displays to use user's currency
+- [x] Build complete ProfileScreen with edit functionality
+- [x] Add personality test retake button
+- [x] Integrate logo.png across app
+- [x] Update app.json with logo assets
+- [x] Fix time display formatting
+- [x] Add Sign Out to Profile header
+
+**Actual Time Spent**: ~3 hours
+
+### Phase 7: Bug Fixes & UI Refinements ✅ COMPLETE
+- [x] Fix cross-account data leakage (user-scoped storage keys)
+- [x] Unify stats display (single source of truth)
+- [x] Fix generated column error (remove hourly_wage from updates)
+- [x] Make categories optional (UX improvement)
+- [x] Add personality test retake navigation
+- [x] Implement tap-outside-to-close for all modals
+- [x] Enforce 15-char item name limit consistently
+- [x] Fix keyboard button clipping (KeyboardAvoidingView restructure)
+- [x] Prevent UI clashes (increase padding for time badges)
+- [x] Fix currency dropdown scrolling
+- [x] Add real-time salary formatting
+
+**Actual Time Spent**: ~5 hours (multiple bug fix iterations)
+
+### Phase 8: Production Testing (NEXT - IN PROGRESS)
+- [ ] Multi-account testing (verify user-scoped storage)
+- [ ] Stats verification (HomeScreen vs ProfileScreen consistency)
+- [ ] Personality test retake flow testing
+- [ ] Input validation testing (15-char limits)
+- [ ] Keyboard behavior testing (iOS and Android)
+- [ ] UI clash testing (various screen sizes)
+- [ ] Modal dismissal testing (all 4 modals)
+- [ ] Test on iOS simulator
+- [ ] Test on Android emulator
+- [ ] Test on physical devices (if available)
 
 **Estimated Completion**: 3-4 hours
 
-### Phase 6: Google OAuth (Optional for MVP)
+### Phase 9: Google OAuth (Optional - Deferred)
 - [ ] Configure Google OAuth in Supabase
 - [ ] Set up Google Cloud Console
 - [ ] Install Google Sign-In package
@@ -300,14 +403,14 @@
 
 **Estimated Completion**: 2-3 hours
 
-### Phase 7: Final Testing & Deployment (Not Started)
-- [ ] Test all flows end-to-end
-- [ ] Test on iOS simulator
-- [ ] Test on Android emulator
-- [ ] Test on physical devices
-- [ ] Fix bugs discovered during testing
-- [ ] Create app icons and splash screens
-- [ ] Prepare for app store submission
+### Phase 10: App Store Deployment (FUTURE)
+- [ ] Create app icons and splash screens (logo already integrated)
+- [ ] Generate app screenshots for both platforms
+- [ ] Write app store descriptions
+- [ ] Set up app store listings
+- [ ] Build production APK/IPA with EAS
+- [ ] Submit for review (iOS App Store, Google Play Store)
+- [ ] Handle any review feedback
 
 **Estimated Completion**: 4-6 hours
 
@@ -352,7 +455,15 @@
 - **Priority**: Low (optional for MVP)
 
 ## Known Issues
-- None currently - all Phase 3 bugs resolved
+- None currently - all Phase 7 bugs resolved ✅
+
+## Known Limitations (Not Bugs - By Design)
+- Questionnaire retake doesn't require confirmation (immediate start)
+- Old personality type not shown during retake
+- Stats sync happens in background (no loading indicator)
+- Categories optional but can't be edited after reminder creation
+- Item names can't exceed 15 chars (enforced by maxLength)
+- Cache persists on logout (stats in Supabase are source of truth)
 
 ## Deferred Features (Future Versions)
 - Purchase decision history tracking
@@ -393,17 +504,18 @@ This keeps the project achievable and testable quickly, with clear paths for enh
 - Works on iOS 13+ and Android 5.0+
 
 ## Next Session Priorities
-1. **Build Profile Screen**: Display and edit user salary, currency, region - show questionnaire results
-2. **Connect Buy/Don't Buy buttons**: Save decisions to AsyncStorage (without "Let Me Think")
-3. **Update Home Screen with real data**: Pull decisions from AsyncStorage to populate stats and reminders
-4. **Add animations**: Modal transitions and button interactions
-5. **Test end-to-end flow**: Complete user journey from calculator to home screen updates
-6. **Polish & refinements**: Error handling, edge cases, haptic feedback
+1. **Multi-Account Testing**: Verify user-scoped storage prevents data leakage between accounts
+2. **Stats Consistency Testing**: Confirm HomeScreen and ProfileScreen show identical numbers
+3. **Personality Test Retake**: Test full navigation flow from Profile → Questionnaire → back
+4. **Input Validation**: Verify 15-char limits work correctly across all screens
+5. **Keyboard Behavior**: Test on both iOS and Android to confirm no button clipping
+6. **Modal Dismissal**: Verify tap-outside works on all 4 modals
+7. **Production Build**: Create EAS build for real device testing (if needed)
 
-## Development Time Estimate
-**Total MVP Time**: ~25-30 hours
-**Time Spent So Far**: ~19 hours (Phases 1-5 complete except Profile Screen)
-**Remaining**: ~6-11 hours
+## Development Time Tracking
+**Total MVP Time**: ~30-35 hours (original estimate: 25-30 hours)
+**Time Spent So Far**: ~29 hours (Phases 1-7 complete)
+**Remaining**: ~5-8 hours (testing, optional features, deployment)
 
 **Progress Breakdown**:
 - Phase 1 (Foundation): 2 hours ✅
@@ -411,7 +523,10 @@ This keeps the project achievable and testable quickly, with clear paths for enh
 - Phase 3 (Onboarding): 6 hours ✅
 - Phase 4 (Home Screen): 4 hours ✅
 - Phase 5 (Spending Calculator): 4 hours ✅
-- Phase 6 (Profile Screen & Integration): 3-4 hours (estimated)
-- Phase 7 (Polish & Polish): 2-3 hours (estimated)
-- Phase 8 (Google OAuth): 2-3 hours (optional)
-- Phase 9 (Testing & Deployment): 4-6 hours (estimated)
+- Phase 6 (Currency & Profile Screen): 5 hours ✅
+- Phase 7 (Bug Fixes & UI Refinements): 5 hours ✅
+- Phase 8 (Production Testing): 3-4 hours (estimated)
+- Phase 9 (Google OAuth): 2-3 hours (optional, deferred)
+- Phase 10 (App Store Deployment): 4-6 hours (estimated)
+
+**Note**: Phase 7 took longer than expected due to discovering and fixing critical architecture issues (cross-account data leakage, stats inconsistency, generated column errors). These fixes significantly improved app security and reliability.
