@@ -1,10 +1,10 @@
 # Active Context: Save Up
 
 ## Current Work Focus
-**Status**: Phase 7 Complete - Bug Fixes and UI Refinements ✅
-**Ready for**: Production Testing and Deployment
+**Status**: Phase 8 In Progress - Onboarding Navigation Fix Complete ✅
+**Ready for**: EAS Build and Production Testing
 
-We have just completed comprehensive bug fixes and UI polish:
+We have just resolved a critical navigation bug and cleaned up debug logging:
 1. ✅ User-scoped storage (critical security fix - no cross-account data leakage)
 2. ✅ Stats unification (single source of truth in Supabase)
 3. ✅ Generated column fix (hourly_wage auto-calculated)
@@ -15,7 +15,40 @@ We have just completed comprehensive bug fixes and UI polish:
 8. ✅ Keyboard behavior fixes (no button clipping)
 9. ✅ UI clash prevention (item name/time badge spacing)
 
-## Recent Changes (Phase 7: Bug Fixes & UI Refinements - CURRENT)
+## Recent Changes (Phase 8: Navigation Fix & Code Cleanup - CURRENT)
+
+**Critical Navigation Bug Fix** (`src/navigation/AppNavigator.tsx`, `src/screens/ProfileScreen.tsx` - CRITICAL FIX)
+- **Problem**: After completing onboarding, "Start Saving Smart" button showed "Retake Personality Test" screen instead of Home
+- **Root Cause**: Both OnboardingNavigator and AppNavigator had screens named "Questionnaire"
+  - React Navigation preserved the route key when switching navigators
+  - Route `Questionnaire-G1awVRzi4EkOaFw2cYoD3` from OnboardingNavigator carried over to AppNavigator
+  - AppNavigator saw existing "Questionnaire" route and displayed it instead of initial "Tabs" route
+- **Solution**: Renamed AppNavigator's screen from "Questionnaire" to "RetakeQuestionnaire"
+  - Updated RootStackParamList type
+  - Updated Stack.Screen name
+  - Updated ProfileScreen navigation call
+- **Navigation Architecture Improvements**:
+  - Added `initialRouteName="Tabs"` to AppNavigator Stack (explicit initial route)
+  - Added `initialRouteName="Home"` to TabNavigator (explicit tab selection)
+  - Added unique React keys to each navigator type (auth/onboarding/app) to force complete remount
+  - Moved NavigationContainer into wrapper component with key prop
+- **Result**: Clean navigation transitions, no route name conflicts, onboarding completes properly
+
+**Code Cleanup - Removed Debug Logging** (Multiple files)
+- **Files Updated**:
+  - `App.tsx`: Removed 10+ console.log statements from checkOnboardingStatus and RootNavigator
+  - `src/navigation/OnboardingNavigator.tsx`: Removed 9 debug logs from handleContinue function
+  - `src/navigation/AppNavigator.tsx`: Removed mount notification log
+  - NavigationContainer: Removed onStateChange and onReady logging
+- **Kept Essential Logs**: Only error logs remain (console.error for actual errors)
+- **Result**: Clean production-ready console output, easier debugging of real issues
+
+**Require Cycle Fix** (`src/utils/onboardingTrigger.ts` - NEW FILE)
+- **Problem**: Circular dependency between App.tsx ↔ OnboardingNavigator.tsx
+- **Solution**: Extracted `onboardingRefreshTrigger` to dedicated utility file
+- **Result**: Clean imports, no require cycle warnings
+
+## Recent Changes (Phase 7: Bug Fixes & UI Refinements - COMPLETE)
 
 **Critical Architecture Fix - User-Scoped Storage** (`src/utils/decisionStorage.ts` - CRITICAL UPDATE)
 - **Problem**: Multiple users on same device could see each other's data
@@ -299,7 +332,16 @@ We have just completed comprehensive bug fixes and UI polish:
 
 ## Next Steps
 
-### Immediate Actions (Phase 8: Production Testing) - NEXT PRIORITY
+### Immediate Actions (Phase 8: EAS Build & Testing) - IN PROGRESS
+
+**Build Preview APK** (HIGH PRIORITY - NEXT)
+1. Run `eas build --platform android --profile preview`
+2. Wait for build to complete on EAS servers
+3. Download APK and test on physical device
+4. Verify all navigation flows work correctly
+5. Test onboarding completion → home screen transition
+
+### Testing Actions (After Build) - NEXT PRIORITY
 
 1. **Multi-Account Testing** (CRITICAL)
    - Create 2+ accounts on same device
@@ -559,6 +601,14 @@ We have just completed comprehensive bug fixes and UI polish:
 6. **Pull-to-Refresh Expected Pattern**: Mobile users expect this on dashboards to see updated data
 7. **Countdown Timers Create Engagement**: "Let Me Think" reminders with live timers motivate users to return to app
 8. **Rotating Tips Provide Value**: Educational tips on Home Screen add value beyond calculator
+
+### Navigation Architecture Insights (Phase 8)
+1. **Screen Name Conflicts Are Critical**: When navigators can switch between each other, screen names MUST be unique
+2. **React Navigation Preserves Routes**: If a route key exists in old navigator and matches name in new navigator, it will be reused
+3. **Explicit Initial Routes Prevent Ambiguity**: Always set initialRouteName on navigators to control entry point
+4. **Navigator Keys Force Remounts**: Adding unique React keys to navigators ensures clean state on switch
+5. **Debug Logs Should Be Minimal in Production**: Only keep error logs, remove informational logs before build
+6. **Require Cycles Can Hide**: Extract shared refs/constants to utilities to break circular dependencies
 
 ### Bug Fixes & Architecture Insights (Phase 7)
 1. **User-Scoped Storage is Critical**: Shared AsyncStorage keys cause security vulnerabilities - always scope by user ID

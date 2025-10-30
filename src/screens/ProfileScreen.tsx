@@ -153,7 +153,7 @@ const ProfileScreen: React.FC = () => {
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>Spending Personality</Text>
           <TouchableOpacity 
-            onPress={() => (navigation as any).navigate('Questionnaire')}
+            onPress={() => (navigation as any).navigate('RetakeQuestionnaire')}
             style={styles.retakeButton}
           >
             <Ionicons name="refresh" size={18} color={colors.accent} />

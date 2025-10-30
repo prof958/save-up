@@ -10,9 +10,7 @@ import AuthNavigator from './src/navigation/AuthNavigator';
 import OnboardingNavigator from './src/navigation/OnboardingNavigator';
 import { supabase } from './src/config/supabase';
 import { colors } from './src/constants/theme';
-
-// Create a global ref to trigger onboarding status refresh
-export const onboardingRefreshTrigger = { current: () => {} };
+import { onboardingRefreshTrigger } from './src/utils/onboardingTrigger';
 
 const RootNavigator: React.FC = () => {
   const { user, loading } = useAuth();
@@ -67,20 +65,39 @@ const RootNavigator: React.FC = () => {
     );
   }
 
+  // Determine which navigator to show
+  let navigatorKey = 'auth';
+  let navigator;
+  
   if (!user) {
-    return <AuthNavigator />;
+    navigatorKey = 'auth';
+    navigator = <AuthNavigator />;
+  } else if (onboardingCompleted) {
+    navigatorKey = 'app';
+    navigator = <AppNavigator />;
+  } else {
+    navigatorKey = 'onboarding';
+    navigator = <OnboardingNavigator />;
   }
 
-  return onboardingCompleted ? <AppNavigator /> : <OnboardingNavigator />;
+  return <React.Fragment key={navigatorKey}>{navigator}</React.Fragment>;
 };
+
+function NavigationWrapper({ children, navigationKey }: { children: React.ReactNode; navigationKey: string }) {
+  return (
+    <NavigationContainer key={navigationKey}>
+      {children}
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   return (
     <AuthProvider>
       <ProfileProvider>
-        <NavigationContainer>
+        <NavigationWrapper navigationKey="main">
           <RootNavigator />
-        </NavigationContainer>
+        </NavigationWrapper>
         <StatusBar style="auto" />
       </ProfileProvider>
     </AuthProvider>

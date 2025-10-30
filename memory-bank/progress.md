@@ -1,11 +1,11 @@
 # Progress: Save Up
 
-## Project Status: MVP Feature Complete - Ready for Testing
+## Project Status: MVP Feature Complete - Ready for Build
 
-**Current Phase**: Phase 7 Complete - Bug Fixes & UI Refinements ✅
-**Next Phase**: Phase 8 - Production Testing
+**Current Phase**: Phase 8 In Progress - Navigation Fix Complete ✅
+**Next Phase**: Phase 9 - EAS Build & Device Testing
 **Last Updated**: 2025-01-30
-**Overall Progress**: 95% (All core features complete, comprehensive bug fixes applied, ready for production testing)
+**Overall Progress**: 97% (All features complete, navigation bug fixed, debug logs removed, ready for production build)
 
 ## What Works
 ✅ **Memory Bank Created**
@@ -363,6 +363,17 @@
 
 **Actual Time Spent**: ~3 hours
 
+### Phase 8: Navigation Fix & Code Cleanup ✅ COMPLETE
+- [x] Fix onboarding → home navigation bug (screen name conflict)
+- [x] Rename AppNavigator Questionnaire → RetakeQuestionnaire
+- [x] Add explicit initialRouteName to all navigators
+- [x] Add unique React keys to navigators for clean remounts
+- [x] Extract onboardingRefreshTrigger to utility file (break require cycle)
+- [x] Remove all debug console.log statements
+- [x] Keep only essential error logs
+
+**Actual Time Spent**: ~2 hours
+
 ### Phase 7: Bug Fixes & UI Refinements ✅ COMPLETE
 - [x] Fix cross-account data leakage (user-scoped storage keys)
 - [x] Unify stats display (single source of truth)
@@ -378,7 +389,11 @@
 
 **Actual Time Spent**: ~5 hours (multiple bug fix iterations)
 
-### Phase 8: Production Testing (NEXT - IN PROGRESS)
+### Phase 9: EAS Build & Device Testing (NEXT - IN PROGRESS)
+- [ ] Build preview APK with EAS
+- [ ] Download and install on physical device
+- [ ] Test complete onboarding flow (Welcome → Results → Home)
+- [ ] Verify navigation transitions work smoothly
 - [ ] Multi-account testing (verify user-scoped storage)
 - [ ] Stats verification (HomeScreen vs ProfileScreen consistency)
 - [ ] Personality test retake flow testing
@@ -392,7 +407,20 @@
 
 **Estimated Completion**: 3-4 hours
 
-### Phase 9: Google OAuth (Optional - Deferred)
+### Phase 10: Production Testing (AFTER BUILD)
+- [ ] Multi-account testing (verify user-scoped storage)
+- [ ] Stats verification (HomeScreen vs ProfileScreen consistency)
+- [ ] Personality test retake flow testing
+- [ ] Input validation testing (15-char limits)
+- [ ] Keyboard behavior testing (iOS and Android)
+- [ ] UI clash testing (various screen sizes)
+- [ ] Modal dismissal testing (all 4 modals)
+- [ ] Test on iOS simulator
+- [ ] Test on Android emulator
+
+**Estimated Completion**: 3-4 hours
+
+### Phase 11: Google OAuth (Optional - Deferred)
 - [ ] Configure Google OAuth in Supabase
 - [ ] Set up Google Cloud Console
 - [ ] Install Google Sign-In package
@@ -403,7 +431,7 @@
 
 **Estimated Completion**: 2-3 hours
 
-### Phase 10: App Store Deployment (FUTURE)
+### Phase 12: App Store Deployment (FUTURE)
 - [ ] Create app icons and splash screens (logo already integrated)
 - [ ] Generate app screenshots for both platforms
 - [ ] Write app store descriptions
@@ -513,9 +541,9 @@ This keeps the project achievable and testable quickly, with clear paths for enh
 7. **Production Build**: Create EAS build for real device testing (if needed)
 
 ## Development Time Tracking
-**Total MVP Time**: ~30-35 hours (original estimate: 25-30 hours)
-**Time Spent So Far**: ~29 hours (Phases 1-7 complete)
-**Remaining**: ~5-8 hours (testing, optional features, deployment)
+**Total MVP Time**: ~32-37 hours (original estimate: 25-30 hours)
+**Time Spent So Far**: ~31 hours (Phases 1-8 complete)
+**Remaining**: ~5-8 hours (build, testing, optional features, deployment)
 
 **Progress Breakdown**:
 - Phase 1 (Foundation): 2 hours ✅
@@ -525,8 +553,10 @@ This keeps the project achievable and testable quickly, with clear paths for enh
 - Phase 5 (Spending Calculator): 4 hours ✅
 - Phase 6 (Currency & Profile Screen): 5 hours ✅
 - Phase 7 (Bug Fixes & UI Refinements): 5 hours ✅
-- Phase 8 (Production Testing): 3-4 hours (estimated)
-- Phase 9 (Google OAuth): 2-3 hours (optional, deferred)
-- Phase 10 (App Store Deployment): 4-6 hours (estimated)
+- Phase 8 (Navigation Fix & Code Cleanup): 2 hours ✅
+- Phase 9 (EAS Build & Device Testing): 1-2 hours (estimated, in progress)
+- Phase 10 (Production Testing): 3-4 hours (estimated)
+- Phase 11 (Google OAuth): 2-3 hours (optional, deferred)
+- Phase 12 (App Store Deployment): 4-6 hours (estimated)
 
-**Note**: Phase 7 took longer than expected due to discovering and fixing critical architecture issues (cross-account data leakage, stats inconsistency, generated column errors). These fixes significantly improved app security and reliability.
+**Note**: Phase 7 took longer than expected due to discovering and fixing critical architecture issues (cross-account data leakage, stats inconsistency, generated column errors). Phase 8 addressed a critical navigation bug where route names conflicted between navigators, causing incorrect screen display after onboarding completion.

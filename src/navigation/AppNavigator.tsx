@@ -26,7 +26,7 @@ export type RootStackParamList = {
     itemPrice: number;
     workHours: number;
   };
-  Questionnaire: undefined;
+  RetakeQuestionnaire: undefined;
 };
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -58,6 +58,7 @@ const TabNavigator = () => {
 
   return (
     <Tab.Navigator
+      initialRouteName="Home"
       screenOptions={{
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.inactive,
@@ -178,6 +179,7 @@ const QuestionnaireWrapper: React.FC<any> = ({ navigation }) => {
 const AppNavigator: React.FC = () => {
   return (
     <Stack.Navigator
+      initialRouteName="Tabs"
       screenOptions={{
         headerShown: false,
       }}
@@ -204,7 +206,7 @@ const AppNavigator: React.FC = () => {
         }}
       />
       <Stack.Screen 
-        name="Questionnaire" 
+        name="RetakeQuestionnaire" 
         component={QuestionnaireWrapper}
         options={{
           headerShown: true,

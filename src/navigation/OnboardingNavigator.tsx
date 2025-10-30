@@ -7,7 +7,7 @@ import SalaryInputScreen from '../screens/onboarding/SalaryInputScreen';
 import QuestionnaireScreen from '../screens/onboarding/QuestionnaireScreen';
 import ResultsScreen from '../screens/onboarding/ResultsScreen';
 import { QuestionnaireAnswers } from '../config/supabase';
-import { onboardingRefreshTrigger } from '../../App';
+import { onboardingRefreshTrigger } from '../utils/onboardingTrigger';
 
 export type OnboardingStackParamList = {
   Welcome: undefined;
@@ -113,10 +113,7 @@ const ResultsWrapper: React.FC<ResultsProps> = ({ route }) => {
           })
           .eq('user_id', user.id);
 
-        if (error) {
-          console.error('Error updating profile:', error);
-          throw error;
-        }
+        if (error) throw error;
       } else {
         // Create new profile
         const { error } = await supabase
@@ -132,19 +129,16 @@ const ResultsWrapper: React.FC<ResultsProps> = ({ route }) => {
             onboarding_completed: true,
           });
 
-        if (error) {
-          console.error('Error creating profile:', error);
-          throw error;
-        }
+        if (error) throw error;
       }
       
-      // Give database a moment to process
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Wait for database to propagate changes
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Trigger immediate refresh of onboarding status
-      await onboardingRefreshTrigger.current();
+      // Trigger navigation switch to main app
+      onboardingRefreshTrigger.current();
       
-      // Don't set isSaving to false here - the component will unmount as user navigates away
+      // Keep loading state - component will unmount when navigator switches
     } catch (error) {
       console.error('Error saving onboarding data:', error);
       setIsSaving(false);

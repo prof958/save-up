@@ -33,13 +33,14 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
         console.error('Error fetching profile:', fetchError);
         setError(fetchError.message);
         setProfile(null);
       } else {
+        // data will be null if no profile exists yet (e.g., during onboarding)
         setProfile(data);
       }
     } catch (err) {

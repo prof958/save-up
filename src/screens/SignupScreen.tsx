@@ -47,10 +47,11 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ onNavigateToLogin }) => {
     if (error) {
       Alert.alert('Signup Failed', error.message);
     } else {
+      // Don't navigate - AuthContext will automatically switch to OnboardingNavigator
+      // when it detects the new user
       Alert.alert(
         'Success',
-        'Account created! Please check your email to verify your account.',
-        [{ text: 'OK', onPress: onNavigateToLogin }]
+        'Account created! Welcome to Save Up.'
       );
     }
   };
