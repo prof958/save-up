@@ -206,37 +206,40 @@ const ProfileScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Debug Sync Button (temporary) */}
-      <TouchableOpacity 
-        style={styles.debugButton}
-        onPress={async () => {
-          try {
-            Alert.alert('Syncing...', 'Syncing local data to database...');
-            const { forceSyncToSupabase } = await import('../utils/forceSync');
-            const result = await forceSyncToSupabase();
-            
-            if (result.success) {
-              await refreshProfile();
-              Alert.alert(
-                'Sync Complete!', 
-                `Synced ${result.decisionsCount} decisions to database. Stats should now be visible.`
-              );
-            } else {
-              Alert.alert('Sync Failed', result.error || 'Unknown error');
-            }
-          } catch (error) {
-            console.error('Sync error:', error);
-            Alert.alert('Error', 'Failed to sync data');
-          }
-        }}
-      >
-        <Ionicons name="sync" size={20} color="#fff" />
-        <Text style={styles.debugButtonText}>Force Sync Stats to Database</Text>
-      </TouchableOpacity>
-
       {/* Settings Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Settings</Text>
+        
+        <TouchableOpacity 
+          style={styles.menuItem} 
+          onPress={async () => {
+            Alert.alert(
+              'Resync Data',
+              'This will recalculate your statistics from local data. Only use this if your stats appear incorrect.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Resync', 
+                  onPress: async () => {
+                    try {
+                      const { loadDecisions, syncStatsToSupabase } = await import('../utils/decisionStorage');
+                      const decisions = await loadDecisions();
+                      await syncStatsToSupabase(decisions);
+                      await refreshProfile();
+                      Alert.alert('Success', 'Your statistics have been resynced.');
+                    } catch (error) {
+                      Alert.alert('Error', 'Failed to resync data. Please try again.');
+                    }
+                  }
+                }
+              ]
+            );
+          }}
+        >
+          <Ionicons name="sync-outline" size={24} color={colors.textSecondary} />
+          <Text style={styles.menuText}>Resync Data</Text>
+          <Ionicons name="chevron-forward" size={20} color={colors.inactive} />
+        </TouchableOpacity>
         
         <TouchableOpacity style={styles.menuItem} onPress={() => setPrivacyModalVisible(true)}>
           <Ionicons name="shield-checkmark-outline" size={24} color={colors.textSecondary} />
@@ -722,22 +725,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 24,
     marginBottom: spacing.sm,
-  },
-  debugButton: {
-    backgroundColor: colors.accent,
-    borderRadius: borderRadius.medium,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-    gap: spacing.sm,
-  },
-  debugButtonText: {
-    color: '#fff',
-    fontSize: fontSize.body,
-    fontWeight: fontWeight.semibold as any,
   },
 });
 

@@ -29,11 +29,24 @@ const HomeScreen: React.FC = () => {
   const [selectedReminder, setSelectedReminder] = useState<SpendingDecision | null>(null);
   const [isProcessingDecision, setIsProcessingDecision] = useState(false);
 
-  const loadData = async () => {
+  // Load reminders from AsyncStorage
+  const loadReminders = async () => {
     try {
-      // Only load reminders, stats come from profile (Supabase)
       const remindersData = await getActiveReminders();
       setReminders(remindersData);
+    } catch (error) {
+      console.error('Error loading reminders:', error);
+      setReminders([]);
+    }
+  };
+
+  // Load all data (reminders + profile stats)
+  const loadData = async () => {
+    try {
+      await Promise.all([
+        loadReminders(),
+        refreshProfile()
+      ]);
     } catch (error) {
       console.error('Error loading home data:', error);
     } finally {
@@ -41,39 +54,35 @@ const HomeScreen: React.FC = () => {
     }
   };
 
+  // Initial load
   useEffect(() => {
     loadData();
   }, []);
 
-  // Refresh data when screen is focused
+  // Refresh when screen is focused
   useFocusEffect(
     React.useCallback(() => {
-      loadData();
-      refreshProfile(); // Also refresh profile stats
-    }, [refreshProfile])
+      loadReminders();
+      refreshProfile();
+    }, [])
   );
 
-  // Refresh reminders every minute to update timer display
+  // Auto-refresh reminders every minute to update time display
   useEffect(() => {
     const interval = setInterval(() => {
-      getActiveReminders().then(setReminders).catch(err => 
-        console.error('Error refreshing reminders:', err)
-      );
-    }, 60000); // Refresh every 60 seconds
+      loadReminders();
+    }, 60000); // 60 seconds
 
     return () => clearInterval(interval);
   }, []);
 
+  // Pull-to-refresh handler
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      // Refresh both reminders and profile stats from Supabase
-      await Promise.all([
-        loadData(),
-        refreshProfile()
-      ]);
+      await loadData();
     } catch (error) {
-      console.error('Error refreshing data:', error);
+      console.error('Error refreshing:', error);
     } finally {
       setRefreshing(false);
     }
@@ -101,33 +110,37 @@ const HomeScreen: React.FC = () => {
     return `${minutes}m`;
   };
 
+  // Handle user's final decision on a reminder
   const handleReminderDecision = async (decision: 'save' | 'bought') => {
     if (!selectedReminder) return;
+    
     setIsProcessingDecision(true);
 
     try {
+      // Update decision type
       const updatedDecision: Partial<SpendingDecision> = {
         decision_type: decision === 'save' ? 'save' : 'buy',
       };
 
       await updateDecision(selectedReminder.id, updatedDecision);
       
+      // Sync stats to Supabase and refresh profile
       const decisions = await loadDecisions();
       await syncStatsToSupabase(decisions);
       await refreshProfile();
       
-      // Reload reminders and close modal
-      const newReminders = await getActiveReminders();
-      setReminders(newReminders);
+      // Reload reminders list and close modal
+      await loadReminders();
       setSelectedReminder(null);
     } catch (error) {
       console.error('Error updating reminder decision:', error);
-      alert('Failed to save decision');
+      alert('Failed to save decision. Please try again.');
     } finally {
       setIsProcessingDecision(false);
     }
   };
 
+  // Show loading state
   if (profileLoading || loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -136,8 +149,17 @@ const HomeScreen: React.FC = () => {
     );
   }
 
-  // Use stats from profile (Supabase source of truth)
-  const hasStats = profile && profile.total_decisions > 0;
+  // Safety check for profile
+  if (!profile) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>Unable to load profile</Text>
+      </View>
+    );
+  }
+
+  // Check if user has any stats
+  const hasStats = profile.total_decisions > 0;
 
   return (
     <ScrollView
@@ -223,7 +245,7 @@ const HomeScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Let Me Think Reminders */}
+      {/* Pending Decisions (Let Me Think Reminders) */}
       {reminders.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Pending Decisions</Text>
@@ -233,28 +255,38 @@ const HomeScreen: React.FC = () => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalScroll}
             >
-            {reminders.map((reminder) => (
-              <TouchableOpacity 
-                key={reminder.id} 
-                onPress={() => setSelectedReminder(reminder)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.card, styles.reminderCard]}>
-                  <View style={styles.reminderBadge}>
-                    <Text style={styles.reminderBadgeText}>{getTimeRemaining(reminder.remind_at!)}</Text>
+              {reminders.map((reminder) => (
+                <TouchableOpacity 
+                  key={reminder.id} 
+                  onPress={() => setSelectedReminder(reminder)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.card, styles.reminderCard]}>
+                    <View style={styles.reminderBadge}>
+                      <Text style={styles.reminderBadgeText}>
+                        {reminder.remind_at ? getTimeRemaining(reminder.remind_at) : 'N/A'}
+                      </Text>
+                    </View>
+                    <Text style={styles.reminderTitle} numberOfLines={2} ellipsizeMode="tail">
+                      {reminder.item_name || 'Unnamed Item'}
+                    </Text>
+                    <View style={styles.reminderDetails}>
+                      <Text style={styles.reminderPrice}>
+                        {formatCompactCurrencyWithCode(reminder.item_price, profile.currency)}
+                      </Text>
+                      <Text style={styles.reminderHours}>
+                        {formatHours(reminder.work_hours)}
+                      </Text>
+                    </View>
                   </View>
-                  <Text style={styles.reminderTitle} numberOfLines={2} ellipsizeMode="tail">
-                    {reminder.item_name || 'Item'}
-                  </Text>
-                  <View style={styles.reminderDetails}>
-                    <Text style={styles.reminderPrice}>{formatCompactCurrencyWithCode(reminder.item_price, profile?.currency || 'USD')}</Text>
-                    <Text style={styles.reminderHours}>{formatHours(reminder.work_hours)}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          {reminders.length > 1 && <View style={styles.scrollIndicator}><Text style={styles.scrollArrow}>›</Text></View>}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            {reminders.length > 1 && (
+              <View style={styles.scrollIndicator}>
+                <Text style={styles.scrollArrow}>›</Text>
+              </View>
+            )}
           </View>
         </View>
       )}
@@ -290,83 +322,108 @@ const HomeScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Reminder Detail Modal */}
-      <Modal
-        visible={!!selectedReminder}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setSelectedReminder(null)}
-      >
-        <TouchableWithoutFeedback onPress={() => setSelectedReminder(null)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-              <View style={styles.reminderModalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Decision Summary</Text>
-              <TouchableOpacity onPress={() => setSelectedReminder(null)}>
-                <Text style={styles.modalCloseButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={true}>
-              <View style={styles.summaryBox}>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Item:</Text>
-                  <Text style={styles.summaryValue}>{selectedReminder?.item_name || 'Unknown'}</Text>
-                </View>
-
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Price:</Text>
-                  <Text style={styles.summaryValue}>{formatCurrencyWithCode(selectedReminder?.item_price || 0, profile?.currency || 'USD')}</Text>
-                </View>
-
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Work hours:</Text>
-                  <Text style={styles.summaryValue}>{formatHours(selectedReminder?.work_hours || 0)}</Text>
-                </View>
-
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Remind me in:</Text>
-                  <Text style={styles.summaryValue}>{selectedReminder?.remind_at ? getTimeRemaining(selectedReminder.remind_at) : 'N/A'}</Text>
-                </View>
-
-                {selectedReminder?.categories && selectedReminder.categories.length > 0 && (
-                  <View style={[styles.summaryRow, styles.summaryRowLast]}>
-                    <Text style={styles.summaryLabel}>Categories:</Text>
-                    <View style={styles.categoriesWrap}>
-                      {selectedReminder.categories.map((cat, index) => (
-                        <View key={index} style={styles.categoryBadge}>
-                          <Text style={styles.categoryBadgeText}>{cat}</Text>
-                        </View>
-                      ))}
-                    </View>
+      {/* Reminder Decision Modal */}
+      {selectedReminder && (
+        <Modal
+          visible={true}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setSelectedReminder(null)}
+        >
+          <TouchableWithoutFeedback onPress={() => setSelectedReminder(null)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                <View style={styles.reminderModalContent}>
+                  {/* Modal Header */}
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Decision Summary</Text>
+                    <TouchableOpacity onPress={() => setSelectedReminder(null)}>
+                      <Text style={styles.modalCloseButton}>✕</Text>
+                    </TouchableOpacity>
                   </View>
-                )}
-              </View>
-            </ScrollView>
 
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.boughtButton, isProcessingDecision && { opacity: 0.6 }]}
-                onPress={() => handleReminderDecision('bought')}
-                disabled={isProcessingDecision}
-              >
-                <Text style={styles.boughtButtonText}>{isProcessingDecision ? 'Saving...' : 'I Bought It'}</Text>
-              </TouchableOpacity>
+                  {/* Modal Body */}
+                  <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={true}>
+                    <View style={styles.summaryBox}>
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Item:</Text>
+                        <Text style={styles.summaryValue}>
+                          {selectedReminder.item_name || 'Unnamed Item'}
+                        </Text>
+                      </View>
 
-              <TouchableOpacity 
-                style={[styles.modalButton, styles.wontBuyButton, isProcessingDecision && { opacity: 0.6 }]}
-                onPress={() => handleReminderDecision('save')}
-                disabled={isProcessingDecision}
-              >
-                <Text style={styles.wontBuyButtonText}>{isProcessingDecision ? 'Saving...' : 'I Won\'t Buy It'}</Text>
-              </TouchableOpacity>
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Price:</Text>
+                        <Text style={styles.summaryValue}>
+                          {formatCurrencyWithCode(selectedReminder.item_price, profile.currency)}
+                        </Text>
+                      </View>
+
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Work hours:</Text>
+                        <Text style={styles.summaryValue}>
+                          {formatHours(selectedReminder.work_hours)}
+                        </Text>
+                      </View>
+
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Time remaining:</Text>
+                        <Text style={styles.summaryValue}>
+                          {selectedReminder.remind_at ? getTimeRemaining(selectedReminder.remind_at) : 'N/A'}
+                        </Text>
+                      </View>
+
+                      {selectedReminder.categories && selectedReminder.categories.length > 0 && (
+                        <View style={[styles.summaryRow, styles.summaryRowLast]}>
+                          <Text style={styles.summaryLabel}>Categories:</Text>
+                          <View style={styles.categoriesWrap}>
+                            {selectedReminder.categories.map((cat, index) => (
+                              <View key={index} style={styles.categoryBadge}>
+                                <Text style={styles.categoryBadgeText}>{cat}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      )}
+                    </View>
+                  </ScrollView>
+
+                  {/* Action Buttons */}
+                  <View style={styles.modalButtonContainer}>
+                    <TouchableOpacity 
+                      style={[
+                        styles.modalButton, 
+                        styles.boughtButton, 
+                        isProcessingDecision && { opacity: 0.6 }
+                      ]}
+                      onPress={() => handleReminderDecision('bought')}
+                      disabled={isProcessingDecision}
+                    >
+                      <Text style={styles.boughtButtonText}>
+                        {isProcessingDecision ? 'Saving...' : 'I Bought It'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[
+                        styles.modalButton, 
+                        styles.wontBuyButton, 
+                        isProcessingDecision && { opacity: 0.6 }
+                      ]}
+                      onPress={() => handleReminderDecision('save')}
+                      disabled={isProcessingDecision}
+                    >
+                      <Text style={styles.wontBuyButtonText}>
+                        {isProcessingDecision ? 'Saving...' : 'I Won\'t Buy It'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+          </TouchableWithoutFeedback>
+        </Modal>
+      )}
     </ScrollView>
   );
 };
@@ -714,6 +771,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: fontSize.body,
     fontWeight: fontWeight.semibold as any,
+  },
+  errorText: {
+    fontSize: fontSize.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
 });
 

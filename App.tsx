@@ -24,7 +24,6 @@ const RootNavigator: React.FC = () => {
       return;
     }
 
-    console.log('Checking onboarding status for user:', user.id);
     try {
       const { data, error } = await supabase
         .from('user_profiles')
@@ -40,12 +39,10 @@ const RootNavigator: React.FC = () => {
 
       // If no profile exists, user needs onboarding
       if (!data) {
-        console.log('No profile found, needs onboarding');
         setOnboardingCompleted(false);
         return;
       }
 
-      console.log('Onboarding status:', data.onboarding_completed);
       setOnboardingCompleted(data.onboarding_completed ?? false);
     } catch (error) {
       console.error('Error checking onboarding status:', error);

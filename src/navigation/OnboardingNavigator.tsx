@@ -117,8 +117,6 @@ const ResultsWrapper: React.FC<ResultsProps> = ({ route }) => {
           console.error('Error updating profile:', error);
           throw error;
         }
-        
-        console.log('Profile updated successfully');
       } else {
         // Create new profile
         const { error } = await supabase
@@ -138,19 +136,13 @@ const ResultsWrapper: React.FC<ResultsProps> = ({ route }) => {
           console.error('Error creating profile:', error);
           throw error;
         }
-        
-        console.log('Profile created successfully');
       }
       
       // Give database a moment to process
       await new Promise(resolve => setTimeout(resolve, 300));
       
       // Trigger immediate refresh of onboarding status
-      console.log('Triggering onboarding status refresh...');
       await onboardingRefreshTrigger.current();
-      
-      // The App component will now re-render with onboardingCompleted = true
-      console.log('Onboarding complete, should navigate to app now');
       
     } catch (error) {
       console.error('Error saving onboarding data:', error);
