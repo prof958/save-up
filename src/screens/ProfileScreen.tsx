@@ -11,6 +11,7 @@ import {
   Platform,
   ActivityIndicator,
   TouchableWithoutFeedback,
+  Switch,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -209,6 +210,27 @@ const ProfileScreen: React.FC = () => {
       {/* Settings Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Settings</Text>
+        
+        {/* Buying Questionnaire Toggle */}
+        <View style={styles.menuItem}>
+          <Ionicons name="help-circle-outline" size={24} color={colors.textSecondary} />
+          <View style={styles.menuTextContainer}>
+            <Text style={styles.menuText}>Buying Questionnaire</Text>
+            <Text style={styles.menuSubtext}>Get guidance before purchases</Text>
+          </View>
+          <Switch
+            value={profile.show_buying_questionnaire}
+            onValueChange={async (value) => {
+              try {
+                await updateProfile({ show_buying_questionnaire: value });
+              } catch (error) {
+                Alert.alert('Error', 'Failed to update setting');
+              }
+            }}
+            trackColor={{ false: colors.inactive, true: colors.accent + '50' }}
+            thumbColor={profile.show_buying_questionnaire ? colors.accent : '#f4f3f4'}
+          />
+        </View>
         
         <TouchableOpacity 
           style={styles.menuItem} 
@@ -725,6 +747,15 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 24,
     marginBottom: spacing.sm,
+  },
+  menuTextContainer: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  menuSubtext: {
+    fontSize: fontSize.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
 });
 

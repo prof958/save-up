@@ -8,6 +8,7 @@ This folder contains SQL scripts for setting up the Supabase database schema.
 - `02_currency_support.sql` - Adds currency support (optional)
 - `03_onboarding_fields.sql` - Adds currency, region, questionnaire fields
 - `04_spending_decisions.sql` - Adds statistics tracking columns
+- `05_buying_questionnaire.sql` - Adds buying questionnaire preference toggle
 - `verify_and_setup.sql` - **Run this first!** Verifies and adds all required columns (idempotent)
 
 ## Quick Setup (Recommended)

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../../constants/theme';
@@ -14,6 +15,7 @@ import { formatCurrency, formatHours } from '../../utils/calculations';
 import { saveDecision, syncStatsToSupabase, loadDecisions } from '../../utils/decisionStorage';
 import { useProfile } from '../../contexts/ProfileContext';
 import { formatCurrencyWithCode } from '../../utils/currency';
+import BuyingQuestionnaire from './BuyingQuestionnaire';
 
 interface ResultsModalProps {
   visible: boolean;
@@ -41,6 +43,65 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
   const { refreshProfile } = useProfile();
   const [isProcessingBuy, setIsProcessingBuy] = useState(false);
   const [isProcessingDontBuy, setIsProcessingDontBuy] = useState(false);
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+
+  const handleBuyClick = () => {
+    // Check if user wants questionnaire
+    if (profile?.show_buying_questionnaire) {
+      setShowQuestionnaire(true);
+    } else {
+      // Proceed directly to buy
+      handleBuy();
+    }
+  };
+
+  const handleQuestionnaireComplete = async (
+    answers: boolean[],
+    score: number,
+    recommendation: 'buy' | 'wait' | 'dont_buy'
+  ) => {
+    setShowQuestionnaire(false);
+
+    // Show recommendation alert
+    const messages = {
+      buy: {
+        title: '✅ Good Decision!',
+        message: `Score: ${score}/5\n\nYour purchase appears well-planned and aligned with your goals. Go ahead with confidence!`,
+        action: 'Confirm Purchase',
+      },
+      wait: {
+        title: '⏳ Consider Waiting',
+        message: `Score: ${score}/5\n\nYou have some uncertainty. It's recommended to wait 48 hours and reassess this purchase.`,
+        action: 'Save for Later',
+      },
+      dont_buy: {
+        title: '❌ Reconsider This Purchase',
+        message: `Score: ${score}/5\n\nStrong signs of impulsivity detected. This purchase may lead to regret. Consider not buying.`,
+        action: 'Don\'t Buy',
+      },
+    };
+
+    const rec = messages[recommendation];
+
+    Alert.alert(rec.title, rec.message, [
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+      {
+        text: rec.action,
+        onPress: async () => {
+          if (recommendation === 'buy') {
+            await handleBuy();
+          } else if (recommendation === 'wait') {
+            onLetMeThink();
+          } else {
+            await handleDontBuy();
+          }
+        },
+      },
+    ]);
+  };
 
   const handleBuy = async () => {
     setIsProcessingBuy(true);
@@ -104,13 +165,26 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
       workHours: calculation.workHours,
     });
   };
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <>
+      {/* Buying Questionnaire Modal */}
+      <BuyingQuestionnaire
+        visible={showQuestionnaire}
+        itemName={calculation.itemName}
+        itemPrice={calculation.price}
+        currency={profile?.currency || 'USD'}
+        onComplete={handleQuestionnaireComplete}
+        onCancel={() => setShowQuestionnaire(false)}
+      />
+
+      {/* Results Modal */}
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={onClose}
+      >
       <View style={styles.overlay}>
         <View style={styles.modal}>
           {/* Header */}
@@ -162,7 +236,7 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, styles.buyButton, isProcessingBuy && { opacity: 0.6 }]}
-              onPress={handleBuy}
+              onPress={handleBuyClick}
               activeOpacity={0.8}
               disabled={isProcessingBuy || isProcessingDontBuy}
             >
@@ -190,6 +264,7 @@ const ResultsModal: React.FC<ResultsModalProps> = ({
         </View>
       </View>
     </Modal>
+    </>
   );
 };
 

@@ -28,6 +28,10 @@ ADD COLUMN IF NOT EXISTS dont_buy_count INTEGER DEFAULT 0 CHECK (dont_buy_count 
 ADD COLUMN IF NOT EXISTS save_count INTEGER DEFAULT 0 CHECK (save_count >= 0),
 ADD COLUMN IF NOT EXISTS let_me_think_count INTEGER DEFAULT 0 CHECK (let_me_think_count >= 0);
 
+-- Buying questionnaire preference (from 05_buying_questionnaire.sql)
+ALTER TABLE public.user_profiles
+ADD COLUMN IF NOT EXISTS show_buying_questionnaire BOOLEAN DEFAULT false;
+
 -- ============================================================================
 -- VERIFY COLUMN TYPES AND CONSTRAINTS
 -- ============================================================================
@@ -107,6 +111,7 @@ WHERE total_money_saved IS NULL
 -- ✓ questionnaire_score (INTEGER)
 -- ✓ questionnaire_answers (JSONB)
 -- ✓ onboarding_completed (BOOLEAN)
+-- ✓ show_buying_questionnaire (BOOLEAN)
 -- ✓ total_money_saved (DECIMAL)
 -- ✓ total_hours_saved (DECIMAL)
 -- ✓ total_decisions (INTEGER)
@@ -127,3 +132,4 @@ COMMENT ON COLUMN public.user_profiles.buy_count IS 'Number of buy decisions';
 COMMENT ON COLUMN public.user_profiles.dont_buy_count IS 'Number of dont_buy decisions';
 COMMENT ON COLUMN public.user_profiles.save_count IS 'Number of save decisions';
 COMMENT ON COLUMN public.user_profiles.let_me_think_count IS 'Number of let_me_think decisions (reminders set)';
+COMMENT ON COLUMN public.user_profiles.show_buying_questionnaire IS 'Whether to show buying questionnaire before confirming purchase';

@@ -40,6 +40,7 @@ export interface UserProfile {
   questionnaire_score: number;
   questionnaire_answers: QuestionnaireAnswers | null;
   onboarding_completed: boolean;
+  show_buying_questionnaire: boolean;
   // Stats (stored in DB for sync/display)
   total_money_saved: number;
   total_hours_saved: number;
