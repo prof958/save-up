@@ -206,6 +206,34 @@ const ProfileScreen: React.FC = () => {
         </View>
       </View>
 
+      {/* Debug Sync Button (temporary) */}
+      <TouchableOpacity 
+        style={styles.debugButton}
+        onPress={async () => {
+          try {
+            Alert.alert('Syncing...', 'Syncing local data to database...');
+            const { forceSyncToSupabase } = await import('../utils/forceSync');
+            const result = await forceSyncToSupabase();
+            
+            if (result.success) {
+              await refreshProfile();
+              Alert.alert(
+                'Sync Complete!', 
+                `Synced ${result.decisionsCount} decisions to database. Stats should now be visible.`
+              );
+            } else {
+              Alert.alert('Sync Failed', result.error || 'Unknown error');
+            }
+          } catch (error) {
+            console.error('Sync error:', error);
+            Alert.alert('Error', 'Failed to sync data');
+          }
+        }}
+      >
+        <Ionicons name="sync" size={20} color="#fff" />
+        <Text style={styles.debugButtonText}>Force Sync Stats to Database</Text>
+      </TouchableOpacity>
+
       {/* Settings Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Settings</Text>
@@ -694,6 +722,22 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 24,
     marginBottom: spacing.sm,
+  },
+  debugButton: {
+    backgroundColor: colors.accent,
+    borderRadius: borderRadius.medium,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  debugButtonText: {
+    color: '#fff',
+    fontSize: fontSize.body,
+    fontWeight: fontWeight.semibold as any,
   },
 });
 

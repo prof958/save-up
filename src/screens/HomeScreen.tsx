@@ -49,7 +49,8 @@ const HomeScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       loadData();
-    }, [])
+      refreshProfile(); // Also refresh profile stats
+    }, [refreshProfile])
   );
 
   // Refresh reminders every minute to update timer display
@@ -65,8 +66,17 @@ const HomeScreen: React.FC = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
+    try {
+      // Refresh both reminders and profile stats from Supabase
+      await Promise.all([
+        loadData(),
+        refreshProfile()
+      ]);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const getTimeRemaining = (remindAt: string): string => {
