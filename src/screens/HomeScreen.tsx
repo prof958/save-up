@@ -19,7 +19,9 @@ import { SpendingDecision } from '../config/supabase';
 import { SAVING_TIPS, SavingTip } from '../constants/savingTips';
 import { formatCurrency, formatHours, formatCompactCurrency, formatCompactHours } from '../utils/calculations';
 import { formatCurrencyWithCode, formatCompactCurrencyWithCode } from '../utils/currency';
+import { getCurrencyByCode } from '../constants/regions';
 import Logo from '../components/shared/Logo';
+import BuyingQuestionnaire from '../components/calculator/BuyingQuestionnaire';
 
 const HomeScreen: React.FC = () => {
   const { profile, loading: profileLoading, refreshProfile } = useProfile();
@@ -28,6 +30,7 @@ const HomeScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedReminder, setSelectedReminder] = useState<SpendingDecision | null>(null);
   const [isProcessingDecision, setIsProcessingDecision] = useState(false);
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
 
   // Load reminders from AsyncStorage
   const loadReminders = async () => {
@@ -114,6 +117,15 @@ const HomeScreen: React.FC = () => {
   const handleReminderDecision = async (decision: 'save' | 'bought') => {
     if (!selectedReminder) return;
     
+    // If buying and questionnaire is enabled, show questionnaire
+    if (decision === 'bought' && profile?.show_buying_questionnaire) {
+      setSelectedReminder(null); // Close reminder modal
+      setTimeout(() => {
+        setShowQuestionnaire(true); // Show questionnaire
+      }, 100);
+      return;
+    }
+
     setIsProcessingDecision(true);
 
     try {
@@ -423,6 +435,86 @@ const HomeScreen: React.FC = () => {
             </View>
           </TouchableWithoutFeedback>
         </Modal>
+      )}
+
+      {/* Buying Questionnaire Modal */}
+      {selectedReminder && (
+        <BuyingQuestionnaire
+          visible={showQuestionnaire}
+          itemName={selectedReminder.item_name || 'Item'}
+          itemPrice={selectedReminder.item_price}
+          currency={getCurrencyByCode(profile?.currency || 'USD')?.symbol || '$'}
+          onComplete={async (answers: boolean[], score: number, recommendation: 'buy' | 'wait' | 'dont_buy', action: 'primary' | 'secondary') => {
+            setShowQuestionnaire(false);
+            setIsProcessingDecision(true);
+
+            try {
+              if (!selectedReminder) return;
+
+              // Determine what to do based on recommendation and action
+              let decisionType: 'buy' | 'save' = 'buy';
+              let message = '';
+
+              if (recommendation === 'buy') {
+                // Good choice scenario
+                if (action === 'primary') {
+                  // "Good Choice, Let's Buy It"
+                  decisionType = 'buy';
+                  message = 'Great! Decision saved. Remember to track your purchase!';
+                } else {
+                  // "Okay, It Can Wait"
+                  decisionType = 'save';
+                  message = 'Wise decision to wait! Keep thinking about it.';
+                }
+              } else if (recommendation === 'wait') {
+                // Consider waiting scenario
+                if (action === 'primary') {
+                  // "I'll Wait 48 Hours"
+                  decisionType = 'save';
+                  message = 'Good choice! Taking more time to think it through.';
+                } else {
+                  // "I Still Want to Buy It"
+                  decisionType = 'buy';
+                  message = 'Okay, decision saved. But consider waiting next time!';
+                }
+              } else {
+                // Impulse alert scenario
+                if (action === 'primary') {
+                  // "I'm Still Gonna Buy It"
+                  decisionType = 'buy';
+                  message = 'Decision saved, but this might be an impulse purchase.';
+                } else {
+                  // "Ok, I Won't Buy It"
+                  decisionType = 'save';
+                  message = 'Great self-control! Keep resisting the impulse.';
+                }
+              }
+
+              const updatedDecision: Partial<SpendingDecision> = {
+                decision_type: decisionType,
+              };
+
+              await updateDecision(selectedReminder.id, updatedDecision);
+
+              const decisions = await loadDecisions();
+              await syncStatsToSupabase(decisions);
+              await refreshProfile();
+
+              alert(message);
+              await loadReminders();
+              setSelectedReminder(null);
+            } catch (error) {
+              console.error('Error saving decision:', error);
+              alert('Failed to save decision. Please try again.');
+            } finally {
+              setIsProcessingDecision(false);
+            }
+          }}
+          onCancel={() => {
+            setShowQuestionnaire(false);
+            setSelectedReminder(null);
+          }}
+        />
       )}
     </ScrollView>
   );

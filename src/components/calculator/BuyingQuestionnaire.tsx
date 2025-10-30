@@ -62,7 +62,7 @@ interface BuyingQuestionnaireProps {
   itemName: string;
   itemPrice: number;
   currency: string;
-  onComplete: (answers: boolean[], score: number, recommendation: 'buy' | 'wait' | 'dont_buy') => void;
+  onComplete: (answers: boolean[], score: number, recommendation: 'buy' | 'wait' | 'dont_buy', action: 'primary' | 'secondary') => void;
   onCancel: () => void;
 }
 
@@ -76,6 +76,9 @@ const BuyingQuestionnaire: React.FC<BuyingQuestionnaireProps> = ({
 }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<(boolean | null)[]>(Array(QUESTIONS.length).fill(null));
+  const [showResults, setShowResults] = useState(false);
+  const [score, setScore] = useState(0);
+  const [recommendation, setRecommendation] = useState<'buy' | 'wait' | 'dont_buy'>('wait');
 
   const handleAnswer = (answer: boolean) => {
     const newAnswers = [...answers];
@@ -87,20 +90,31 @@ const BuyingQuestionnaire: React.FC<BuyingQuestionnaireProps> = ({
       setCurrentQuestion(currentQuestion + 1);
     } else {
       // Calculate score and recommendation
-      const score = newAnswers.filter(a => a === true).length;
-      let recommendation: 'buy' | 'wait' | 'dont_buy';
+      const calculatedScore = newAnswers.filter(a => a === true).length;
+      let calculatedRecommendation: 'buy' | 'wait' | 'dont_buy';
       
-      if (score === 5) {
-        recommendation = 'buy';
-      } else if (score >= 3) {
-        recommendation = 'wait';
+      if (calculatedScore === 5) {
+        calculatedRecommendation = 'buy';
+      } else if (calculatedScore >= 3) {
+        calculatedRecommendation = 'wait';
       } else {
-        recommendation = 'dont_buy';
+        calculatedRecommendation = 'dont_buy';
       }
 
-      onComplete(newAnswers as boolean[], score, recommendation);
-      resetQuestionnaire();
+      setScore(calculatedScore);
+      setRecommendation(calculatedRecommendation);
+      setShowResults(true);
     }
+  };
+
+  const handlePrimaryAction = () => {
+    onComplete(answers as boolean[], score, recommendation, 'primary');
+    resetQuestionnaire();
+  };
+
+  const handleSecondaryAction = () => {
+    onComplete(answers as boolean[], score, recommendation, 'secondary');
+    resetQuestionnaire();
   };
 
   const handleBack = () => {
@@ -117,10 +131,47 @@ const BuyingQuestionnaire: React.FC<BuyingQuestionnaireProps> = ({
   const resetQuestionnaire = () => {
     setCurrentQuestion(0);
     setAnswers(Array(QUESTIONS.length).fill(null));
+    setShowResults(false);
+    setScore(0);
+    setRecommendation('wait');
   };
 
   const question = QUESTIONS[currentQuestion];
-  const progress = ((currentQuestion + 1) / QUESTIONS.length) * 100;
+  const progress = showResults ? 100 : ((currentQuestion + 1) / QUESTIONS.length) * 100;
+
+  // Get result messages based on recommendation
+  const getResultContent = () => {
+    if (recommendation === 'buy') {
+      return {
+        icon: 'checkmark-circle',
+        iconColor: '#4CAF50',
+        title: '✅ Good Choice!',
+        message: `Score: ${score}/5\n\nYour answers suggest this is a well-considered purchase. You've thought this through!`,
+        primaryButton: 'Good Choice, Let\'s Buy It',
+        secondaryButton: 'Okay, It Can Wait',
+      };
+    } else if (recommendation === 'wait') {
+      return {
+        icon: 'time',
+        iconColor: '#FF9800',
+        title: '⏳ Consider Waiting',
+        message: `Score: ${score}/5\n\nYou have some uncertainty. It's recommended to wait 48 hours and reassess this purchase.`,
+        primaryButton: 'I\'ll Wait 48 Hours',
+        secondaryButton: 'I Still Want to Buy It',
+      };
+    } else {
+      return {
+        icon: 'alert-circle',
+        iconColor: '#F44336',
+        title: '❌ Impulse Alert!',
+        message: `Score: ${score}/5\n\nStrong signs of impulsivity detected. This purchase may lead to regret.`,
+        primaryButton: 'I\'m Still Gonna Buy It',
+        secondaryButton: 'Ok, I Won\'t Buy It',
+      };
+    }
+  };
+
+  const resultContent = getResultContent();
 
   return (
     <Modal
@@ -128,6 +179,8 @@ const BuyingQuestionnaire: React.FC<BuyingQuestionnaireProps> = ({
       transparent={true}
       animationType="slide"
       onRequestClose={handleClose}
+      presentationStyle="overFullScreen"
+      statusBarTranslucent={true}
     >
       <TouchableWithoutFeedback onPress={handleClose}>
         <View style={styles.overlay}>
@@ -152,51 +205,83 @@ const BuyingQuestionnaire: React.FC<BuyingQuestionnaireProps> = ({
                   <View style={[styles.progressFill, { width: `${progress}%` }]} />
                 </View>
                 <Text style={styles.progressText}>
-                  Question {currentQuestion + 1} of {QUESTIONS.length}
+                  {showResults ? 'Complete' : `Question ${currentQuestion + 1} of ${QUESTIONS.length}`}
                 </Text>
               </View>
 
-              {/* Question */}
+              {/* Question or Results */}
               <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                <View style={styles.questionContainer}>
-                  <Text style={styles.questionNumber}>#{question.id}</Text>
-                  <Text style={styles.questionText}>{question.question}</Text>
-                  <View style={styles.basisContainer}>
-                    <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
-                    <Text style={styles.basisText}>{question.basis}</Text>
+                {!showResults ? (
+                  <>
+                    <View style={styles.questionContainer}>
+                      <Text style={styles.questionNumber}>#{question.id}</Text>
+                      <Text style={styles.questionText}>{question.question}</Text>
+                      <View style={styles.basisContainer}>
+                        <Ionicons name="information-circle-outline" size={16} color={colors.textSecondary} />
+                        <Text style={styles.basisText}>{question.basis}</Text>
+                      </View>
+                    </View>
+
+                    {/* Answer Buttons */}
+                    <View style={styles.answersContainer}>
+                      <TouchableOpacity
+                        style={[styles.answerButton, styles.yesButton]}
+                        onPress={() => handleAnswer(true)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="checkmark-circle" size={28} color="#fff" />
+                        <View style={styles.answerContent}>
+                          <Text style={styles.answerButtonText}>Yes</Text>
+                          <Text style={styles.answerHint}>{question.yesHint}</Text>
+                        </View>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.answerButton, styles.noButton]}
+                        onPress={() => handleAnswer(false)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="close-circle" size={28} color="#fff" />
+                        <View style={styles.answerContent}>
+                          <Text style={styles.answerButtonText}>No</Text>
+                          <Text style={styles.answerHint}>{question.noHint}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : (
+                  /* Results View */
+                  <View style={styles.resultsContainer}>
+                    <View style={styles.resultIconContainer}>
+                      <Ionicons name={resultContent.icon as any} size={64} color={resultContent.iconColor} />
+                    </View>
+                    <Text style={styles.resultTitle}>{resultContent.title}</Text>
+                    <Text style={styles.resultMessage}>{resultContent.message}</Text>
+
+                    {/* Action Buttons */}
+                    <View style={styles.resultButtonsContainer}>
+                      <TouchableOpacity
+                        style={[styles.resultButton, styles.primaryResultButton]}
+                        onPress={handlePrimaryAction}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.primaryResultButtonText}>{resultContent.primaryButton}</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.resultButton, styles.secondaryResultButton]}
+                        onPress={handleSecondaryAction}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.secondaryResultButtonText}>{resultContent.secondaryButton}</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-
-                {/* Answer Buttons */}
-                <View style={styles.answersContainer}>
-                  <TouchableOpacity
-                    style={[styles.answerButton, styles.yesButton]}
-                    onPress={() => handleAnswer(true)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="checkmark-circle" size={28} color="#fff" />
-                    <View style={styles.answerContent}>
-                      <Text style={styles.answerButtonText}>Yes</Text>
-                      <Text style={styles.answerHint}>{question.yesHint}</Text>
-                    </View>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.answerButton, styles.noButton]}
-                    onPress={() => handleAnswer(false)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="close-circle" size={28} color="#fff" />
-                    <View style={styles.answerContent}>
-                      <Text style={styles.answerButtonText}>No</Text>
-                      <Text style={styles.answerHint}>{question.noHint}</Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
+                )}
               </ScrollView>
 
               {/* Navigation */}
-              {currentQuestion > 0 && (
+              {!showResults && currentQuestion > 0 && (
                 <TouchableOpacity style={styles.backButton} onPress={handleBack}>
                   <Ionicons name="arrow-back" size={20} color={colors.accent} />
                   <Text style={styles.backButtonText}>Previous Question</Text>
@@ -213,15 +298,21 @@ const BuyingQuestionnaire: React.FC<BuyingQuestionnaireProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'flex-end',
+    zIndex: 9999,
   },
   container: {
     backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '90%',
+    height: '90%',
     paddingBottom: spacing.xl,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   header: {
     padding: spacing.lg,
@@ -347,6 +438,59 @@ const styles = StyleSheet.create({
     fontSize: fontSize.body,
     color: colors.accent,
     fontWeight: fontWeight.medium as any,
+  },
+  resultsContainer: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  resultIconContainer: {
+    marginBottom: spacing.lg,
+  },
+  resultTitle: {
+    fontSize: fontSize.heading2,
+    fontWeight: fontWeight.bold as any,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  resultMessage: {
+    fontSize: fontSize.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+  },
+  resultButtonsContainer: {
+    width: '100%',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  resultButton: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.large,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
+  },
+  primaryResultButton: {
+    backgroundColor: colors.accent,
+  },
+  secondaryResultButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: colors.textMuted,
+  },
+  primaryResultButtonText: {
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.bold as any,
+    color: colors.textLight,
+  },
+  secondaryResultButtonText: {
+    fontSize: fontSize.bodyLarge,
+    fontWeight: fontWeight.semibold as any,
+    color: colors.textPrimary,
   },
 });
 

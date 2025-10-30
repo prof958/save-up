@@ -16,6 +16,7 @@ import { colors, spacing, fontSize, fontWeight, borderRadius } from '../constant
 import { calculateWorkHours, calculateInvestmentValue, formatCurrency, formatHours, formatNumberInput, parseNumberInput } from '../utils/calculations';
 import { useProfile } from '../contexts/ProfileContext';
 import { ResultsModal } from '../components/calculator';
+import BuyingQuestionnaire from '../components/calculator/BuyingQuestionnaire';
 import { saveDecision, loadDecisions, syncStatsToSupabase } from '../utils/decisionStorage';
 import { formatCurrencyWithCode, getCurrencySymbol } from '../utils/currency';
 import { getCurrencyByCode } from '../constants/regions';
@@ -35,6 +36,7 @@ const SpendingScreen: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
   const [calculationResult, setCalculationResult] = useState<CalculationResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
 
   const handlePriceChange = (text: string) => {
     const formatted = formatNumberInput(text);
@@ -178,6 +180,90 @@ const SpendingScreen: React.FC = () => {
             });
           }}
           onClear={handleClearForm}
+          onShowQuestionnaire={() => setShowQuestionnaire(true)}
+        />
+      )}
+
+      {/* Buying Questionnaire Modal - Rendered at screen level */}
+      {calculationResult && (
+        <BuyingQuestionnaire
+          visible={showQuestionnaire}
+          itemName={calculationResult.itemName}
+          itemPrice={calculationResult.price}
+          currency={getCurrencyByCode(profile?.currency || 'USD')?.symbol || '$'}
+          onComplete={async (answers: boolean[], score: number, recommendation: 'buy' | 'wait' | 'dont_buy', action: 'primary' | 'secondary') => {
+            setShowQuestionnaire(false);
+            setIsProcessing(true);
+
+            try {
+              if (!profile?.id) {
+                alert('Profile not loaded. Please try again.');
+                return;
+              }
+
+              // Determine what to do based on recommendation and action
+              let decisionType: 'buy' | 'dont_buy' | 'save' = 'buy';
+              let message = '';
+
+              if (recommendation === 'buy') {
+                // Good choice scenario
+                if (action === 'primary') {
+                  // "Good Choice, Let's Buy It"
+                  decisionType = 'buy';
+                  message = 'Great! Decision saved. Remember to track your purchase!';
+                } else {
+                  // "Okay, It Can Wait"
+                  decisionType = 'save';
+                  message = 'Wise decision to wait! Item saved for later consideration.';
+                }
+              } else if (recommendation === 'wait') {
+                // Consider waiting scenario
+                if (action === 'primary') {
+                  // "I'll Wait 48 Hours"
+                  decisionType = 'save';
+                  message = 'Good choice! Taking time to think it through.';
+                } else {
+                  // "I Still Want to Buy It"
+                  decisionType = 'buy';
+                  message = 'Okay, decision saved. But consider waiting next time!';
+                }
+              } else {
+                // Impulse alert scenario
+                if (action === 'primary') {
+                  // "I'm Still Gonna Buy It"
+                  decisionType = 'buy';
+                  message = 'Decision saved, but this might be an impulse purchase.';
+                } else {
+                  // "Ok, I Won't Buy It"
+                  decisionType = 'dont_buy';
+                  message = 'Great self-control! Money saved is money earned.';
+                }
+              }
+
+              await saveDecision({
+                item_name: calculationResult.itemName,
+                item_price: calculationResult.price,
+                work_hours: calculationResult.workHours,
+                investment_value: calculationResult.investmentValue,
+                decision_type: decisionType,
+                remind_at: decisionType === 'save' ? new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() : null,
+              });
+
+              const decisions = await loadDecisions();
+              await syncStatsToSupabase(decisions);
+              await refreshProfile();
+
+              alert(message);
+              handleClearForm();
+              (navigation as any).navigate('Home');
+            } catch (error) {
+              console.error('Error saving decision:', error);
+              alert('Failed to save decision. Please try again.');
+            } finally {
+              setIsProcessing(false);
+            }
+          }}
+          onCancel={() => setShowQuestionnaire(false)}
         />
       )}
     </KeyboardAvoidingView>
