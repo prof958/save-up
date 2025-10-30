@@ -21,7 +21,11 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.saveup.app"
+      "package": "com.saveup.app",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET"
+      ]
     },
     "web": {
       "favicon": "./assets/logo.png"

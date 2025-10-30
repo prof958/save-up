@@ -144,6 +144,7 @@ const ResultsWrapper: React.FC<ResultsProps> = ({ route }) => {
       // Trigger immediate refresh of onboarding status
       await onboardingRefreshTrigger.current();
       
+      // Don't set isSaving to false here - the component will unmount as user navigates away
     } catch (error) {
       console.error('Error saving onboarding data:', error);
       setIsSaving(false);
