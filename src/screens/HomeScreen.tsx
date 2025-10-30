@@ -11,7 +11,7 @@ import {
   Modal,
   TouchableWithoutFeedback
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useProfile } from '../contexts/ProfileContext';
 import { colors, spacing, fontSize, fontWeight, borderRadius } from '../constants/theme';
 import { getActiveReminders, updateDecision, loadDecisions, syncStatsToSupabase } from '../utils/decisionStorage';
@@ -24,6 +24,7 @@ import Logo from '../components/shared/Logo';
 import BuyingQuestionnaire from '../components/calculator/BuyingQuestionnaire';
 
 const HomeScreen: React.FC = () => {
+  const navigation = useNavigation();
   const { profile, loading: profileLoading, refreshProfile } = useProfile();
   const [reminders, setReminders] = useState<SpendingDecision[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -31,6 +32,7 @@ const HomeScreen: React.FC = () => {
   const [selectedReminder, setSelectedReminder] = useState<SpendingDecision | null>(null);
   const [isProcessingDecision, setIsProcessingDecision] = useState(false);
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+  const [questionnaireReminder, setQuestionnaireReminder] = useState<SpendingDecision | null>(null);
 
   // Load reminders from AsyncStorage
   const loadReminders = async () => {
@@ -114,11 +116,12 @@ const HomeScreen: React.FC = () => {
   };
 
   // Handle user's final decision on a reminder
-  const handleReminderDecision = async (decision: 'save' | 'bought') => {
+  const handleReminderDecision = async (decision: 'bought' | 'wontbuy') => {
     if (!selectedReminder) return;
     
-    // If buying and questionnaire is enabled, show questionnaire
+    // If "I want to buy it" and questionnaire is enabled, show questionnaire
     if (decision === 'bought' && profile?.show_buying_questionnaire) {
+      setQuestionnaireReminder(selectedReminder); // Store reminder for questionnaire
       setSelectedReminder(null); // Close reminder modal
       setTimeout(() => {
         setShowQuestionnaire(true); // Show questionnaire
@@ -130,8 +133,9 @@ const HomeScreen: React.FC = () => {
 
     try {
       // Update decision type
+      // "bought" = buy, "wontbuy" = don't buy (erase reminder)
       const updatedDecision: Partial<SpendingDecision> = {
-        decision_type: decision === 'save' ? 'save' : 'buy',
+        decision_type: decision === 'bought' ? 'buy' : 'dont_buy',
       };
 
       await updateDecision(selectedReminder.id, updatedDecision);
@@ -412,7 +416,7 @@ const HomeScreen: React.FC = () => {
                       disabled={isProcessingDecision}
                     >
                       <Text style={styles.boughtButtonText}>
-                        {isProcessingDecision ? 'Saving...' : 'I Bought It'}
+                        {isProcessingDecision ? 'Saving...' : 'I Want to Buy It'}
                       </Text>
                     </TouchableOpacity>
 
@@ -422,11 +426,11 @@ const HomeScreen: React.FC = () => {
                         styles.wontBuyButton, 
                         isProcessingDecision && { opacity: 0.6 }
                       ]}
-                      onPress={() => handleReminderDecision('save')}
+                      onPress={() => handleReminderDecision('wontbuy')}
                       disabled={isProcessingDecision}
                     >
                       <Text style={styles.wontBuyButtonText}>
-                        {isProcessingDecision ? 'Saving...' : 'I Won\'t Buy It'}
+                        {isProcessingDecision ? 'Saving...' : 'I\'m Not Gonna Buy It'}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -438,63 +442,83 @@ const HomeScreen: React.FC = () => {
       )}
 
       {/* Buying Questionnaire Modal */}
-      {selectedReminder && (
+      {questionnaireReminder && (
         <BuyingQuestionnaire
           visible={showQuestionnaire}
-          itemName={selectedReminder.item_name || 'Item'}
-          itemPrice={selectedReminder.item_price}
+          itemName={questionnaireReminder.item_name || 'Item'}
+          itemPrice={questionnaireReminder.item_price}
           currency={getCurrencyByCode(profile?.currency || 'USD')?.symbol || '$'}
           onComplete={async (answers: boolean[], score: number, recommendation: 'buy' | 'wait' | 'dont_buy', action: 'primary' | 'secondary') => {
             setShowQuestionnaire(false);
             setIsProcessingDecision(true);
 
             try {
-              if (!selectedReminder) return;
+              if (!questionnaireReminder) return;
 
               // Determine what to do based on recommendation and action
-              let decisionType: 'buy' | 'save' = 'buy';
+              let decisionType: 'buy' | 'save' | 'dont_buy' = 'buy';
               let message = '';
+              let shouldNavigateToLetMeThink = false;
 
               if (recommendation === 'buy') {
                 // Good choice scenario
                 if (action === 'primary') {
-                  // "Good Choice, Let's Buy It"
+                  // "Good Choice, Let's Buy It" - BUY and erase reminder
                   decisionType = 'buy';
                   message = 'Great! Decision saved. Remember to track your purchase!';
                 } else {
-                  // "Okay, It Can Wait"
-                  decisionType = 'save';
-                  message = 'Wise decision to wait! Keep thinking about it.';
+                  // "Okay, It Can Wait" - Navigate to Let Me Think
+                  shouldNavigateToLetMeThink = true;
                 }
               } else if (recommendation === 'wait') {
                 // Consider waiting scenario
                 if (action === 'primary') {
-                  // "I'll Wait 48 Hours"
-                  decisionType = 'save';
-                  message = 'Good choice! Taking more time to think it through.';
+                  // "I'll Wait 48 Hours" - Navigate to Let Me Think
+                  shouldNavigateToLetMeThink = true;
                 } else {
-                  // "I Still Want to Buy It"
+                  // "I Still Want to Buy It" - BUY and erase reminder
                   decisionType = 'buy';
                   message = 'Okay, decision saved. But consider waiting next time!';
                 }
               } else {
                 // Impulse alert scenario
                 if (action === 'primary') {
-                  // "I'm Still Gonna Buy It"
+                  // "I'm Still Gonna Buy It" - BUY and erase reminder
                   decisionType = 'buy';
                   message = 'Decision saved, but this might be an impulse purchase.';
                 } else {
-                  // "Ok, I Won't Buy It"
-                  decisionType = 'save';
-                  message = 'Great self-control! Keep resisting the impulse.';
+                  // "Ok, I Won't Buy It" - DON'T BUY and erase reminder
+                  decisionType = 'dont_buy';
+                  message = 'Great self-control! Reminder removed.';
                 }
               }
 
+              // If user wants to wait, navigate to Let Me Think screen
+              if (shouldNavigateToLetMeThink) {
+                // Delete the current reminder first
+                const updatedDecision: Partial<SpendingDecision> = {
+                  decision_type: 'dont_buy', // Mark as don't buy to remove from reminders
+                };
+                await updateDecision(questionnaireReminder.id, updatedDecision);
+
+                // Navigate to Let Me Think screen with the item details
+                (navigation as any).navigate('LetMeThink', {
+                  itemName: questionnaireReminder.item_name,
+                  itemPrice: questionnaireReminder.item_price,
+                  workHours: questionnaireReminder.work_hours,
+                });
+                
+                await loadReminders();
+                setQuestionnaireReminder(null);
+                return;
+              }
+
+              // Update decision and erase reminder
               const updatedDecision: Partial<SpendingDecision> = {
                 decision_type: decisionType,
               };
 
-              await updateDecision(selectedReminder.id, updatedDecision);
+              await updateDecision(questionnaireReminder.id, updatedDecision);
 
               const decisions = await loadDecisions();
               await syncStatsToSupabase(decisions);
@@ -502,7 +526,7 @@ const HomeScreen: React.FC = () => {
 
               alert(message);
               await loadReminders();
-              setSelectedReminder(null);
+              setQuestionnaireReminder(null);
             } catch (error) {
               console.error('Error saving decision:', error);
               alert('Failed to save decision. Please try again.');
@@ -512,7 +536,7 @@ const HomeScreen: React.FC = () => {
           }}
           onCancel={() => {
             setShowQuestionnaire(false);
-            setSelectedReminder(null);
+            setQuestionnaireReminder(null);
           }}
         />
       )}

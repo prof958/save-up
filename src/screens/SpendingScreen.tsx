@@ -204,6 +204,7 @@ const SpendingScreen: React.FC = () => {
               // Determine what to do based on recommendation and action
               let decisionType: 'buy' | 'dont_buy' | 'save' = 'buy';
               let message = '';
+              let shouldNavigateToLetMeThink = false;
 
               if (recommendation === 'buy') {
                 // Good choice scenario
@@ -212,16 +213,14 @@ const SpendingScreen: React.FC = () => {
                   decisionType = 'buy';
                   message = 'Great! Decision saved. Remember to track your purchase!';
                 } else {
-                  // "Okay, It Can Wait"
-                  decisionType = 'save';
-                  message = 'Wise decision to wait! Item saved for later consideration.';
+                  // "Okay, It Can Wait" - Navigate to Let Me Think
+                  shouldNavigateToLetMeThink = true;
                 }
               } else if (recommendation === 'wait') {
                 // Consider waiting scenario
                 if (action === 'primary') {
-                  // "I'll Wait 48 Hours"
-                  decisionType = 'save';
-                  message = 'Good choice! Taking time to think it through.';
+                  // "I'll Wait 48 Hours" - Navigate to Let Me Think
+                  shouldNavigateToLetMeThink = true;
                 } else {
                   // "I Still Want to Buy It"
                   decisionType = 'buy';
@@ -240,13 +239,24 @@ const SpendingScreen: React.FC = () => {
                 }
               }
 
+              // If user wants to wait, navigate to Let Me Think screen
+              if (shouldNavigateToLetMeThink) {
+                handleClearForm();
+                (navigation as any).navigate('LetMeThink', {
+                  itemName: calculationResult.itemName,
+                  itemPrice: calculationResult.price,
+                  workHours: calculationResult.workHours,
+                });
+                return;
+              }
+
               await saveDecision({
                 item_name: calculationResult.itemName,
                 item_price: calculationResult.price,
                 work_hours: calculationResult.workHours,
                 investment_value: calculationResult.investmentValue,
                 decision_type: decisionType,
-                remind_at: decisionType === 'save' ? new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() : null,
+                remind_at: null,
               });
 
               const decisions = await loadDecisions();
