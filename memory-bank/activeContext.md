@@ -1,10 +1,10 @@
 # Active Context: Save Up
 
 ## Current Work Focus
-**Status**: Phase 8 In Progress - Onboarding Navigation Fix Complete ✅
-**Ready for**: EAS Build and Production Testing
+**Status**: Phase 9 Complete - Notifications & Navigation Bar ✅
+**Ready for**: Production Build & Testing
 
-We have just resolved a critical navigation bug and cleaned up debug logging:
+Completed enhancements:
 1. ✅ User-scoped storage (critical security fix - no cross-account data leakage)
 2. ✅ Stats unification (single source of truth in Supabase)
 3. ✅ Generated column fix (hourly_wage auto-calculated)
@@ -14,8 +14,52 @@ We have just resolved a critical navigation bug and cleaned up debug logging:
 7. ✅ Input validation consistency (15-char limits)
 8. ✅ Keyboard behavior fixes (no button clipping)
 9. ✅ UI clash prevention (item name/time badge spacing)
+10. ✅ Push notification system (reminder & engagement notifications)
+11. ✅ Android navigation bar respect (SafeAreaProvider integration)
 
-## Recent Changes (Phase 8: Navigation Fix & Code Cleanup - CURRENT)
+## Recent Changes (Phase 9: Notifications & Navigation Bar - CURRENT)
+
+**Push Notification System** (Multiple files - NEW FEATURE)
+- **Dependencies Added**: expo-notifications, expo-device
+- **New Files Created**:
+  - `src/utils/notificationService.ts` - Complete notification management
+  - `dbscripts/add_notification_preferences.sql` - Database migration
+- **Notification Channels** (Android):
+  - **Reminders Channel**: HIGH importance for "Let Me Think" notifications
+  - **Engagement Channel**: DEFAULT importance for periodic reminders
+- **Notification Types**:
+  1. **Reminder Notifications**: Scheduled when user creates "Let Me Think" reminder
+     - Title: "⏰ Time to Decide!"
+     - Body: "Ready to decide on {item_name} (${price})?"
+     - Fires at exact remind_at time
+     - Cancelled automatically when user makes decision
+  2. **Engagement Notifications**: Periodic app engagement reminders
+     - Title: "💚 Hey, Save Up!"
+     - Body: Rotating motivational messages (5 variants)
+     - Frequency: Twice per week at 7 PM
+     - User-controlled via Profile settings toggle
+- **Integration Points**:
+  - `App.tsx`: Initialize notifications on app start
+  - `LetMeThinkScreen.tsx`: Schedule notification when creating reminder
+  - `HomeScreen.tsx`: Cancel notification when making decision
+  - `ProfileScreen.tsx`: Toggle engagement notifications on/off
+- **Database Schema**: Added `notification_id` to SpendingDecision, `enable_engagement_notifications` to UserProfile
+- **Configuration**: Updated app.json with notification icons, colors, plugins
+- **User Preference**: Note to avoid creating .md files for every change
+
+**Android Navigation Bar Fix** (App.tsx, AppNavigator.tsx - CRITICAL FIX)
+- **Problem**: Content hidden behind Android navigation bar (edge-to-edge mode enabled)
+- **Root Cause**: edgeToEdgeEnabled=true without SafeAreaProvider
+- **Solution**:
+  - Wrapped entire app with SafeAreaProvider in App.tsx
+  - Used useSafeAreaInsets() hook in TabNavigator
+  - Dynamic tab bar padding: `insets.bottom > 0 ? insets.bottom : 15`
+  - Dynamic tab bar height: `(insets.bottom > 0 ? insets.bottom : 15) + 65`
+- **Result**: Tab bar respects navigation bar height on all Android devices
+- **Benefits**: Works with gesture nav, button nav, different screen sizes
+- **TypeScript Fix**: Added notification_id to SpendingScreen.tsx saveDecision call
+
+## Recent Changes (Phase 8: Navigation Fix & Code Cleanup - COMPLETE)
 
 **Critical Navigation Bug Fix** (`src/navigation/AppNavigator.tsx`, `src/screens/ProfileScreen.tsx` - CRITICAL FIX)
 - **Problem**: After completing onboarding, "Start Saving Smart" button showed "Retake Personality Test" screen instead of Home
@@ -332,18 +376,43 @@ We have just resolved a critical navigation bug and cleaned up debug logging:
 
 ## Next Steps
 
-### Immediate Actions (Phase 8: EAS Build & Testing) - IN PROGRESS
+### Immediate Actions (Phase 10: Production Build & Testing) - NEXT
 
-**Build Preview APK** (HIGH PRIORITY - NEXT)
-1. Run `eas build --platform android --profile preview`
+**Run Database Migration** (HIGH PRIORITY - FIRST)
+1. Open Supabase SQL Editor
+2. Execute dbscripts/add_notification_preferences.sql
+3. Verify enable_engagement_notifications column added to user_profiles
+
+**Build Production APK** (HIGH PRIORITY - NEXT)
+1. Run `eas build --platform android --profile production`
 2. Wait for build to complete on EAS servers
 3. Download APK and test on physical device
 4. Verify all navigation flows work correctly
-5. Test onboarding completion → home screen transition
+5. Test notification system end-to-end
 
 ### Testing Actions (After Build) - NEXT PRIORITY
 
-1. **Multi-Account Testing** (CRITICAL)
+1. **Notification System Testing** (HIGH PRIORITY)
+   - Run database migration in Supabase
+   - Create "Let Me Think" reminder with 1-minute timer
+   - Wait for notification to appear
+   - Tap notification, verify app opens to reminder
+   - Make decision, verify notification cancels
+   - Enable engagement notifications in Profile
+   - Verify notifications scheduled (check device settings)
+   - Disable engagement notifications
+   - Verify notifications cancelled
+   - **Validates**: Notification scheduling, cancellation, user control
+
+2. **Navigation Bar Testing** (HIGH PRIORITY)
+   - Test on device with button navigation (3 buttons)
+   - Test on device with gesture navigation (swipe bar)
+   - Verify tab bar buttons fully visible and tappable
+   - Verify no content hidden behind system UI
+   - Test on different screen sizes if possible
+   - **Validates**: SafeAreaProvider integration, dynamic insets
+
+3. **Multi-Account Testing** (CRITICAL)
    - Create 2+ accounts on same device
    - Make decisions on Account A
    - Switch to Account B, verify Account B sees only their data

@@ -245,7 +245,40 @@ interface SpendingDecision {
 - AsyncStorage stores individual decisions only (for privacy and details)
 - decisionStorage.syncStatsToSupabase() updates aggregates in Supabase after each decision
 
-### 8. Horizontal Carousels for Home Screen (Phase 4)
+### 9. Push Notification System (Phase 9)
+**Decision**: Implement local notifications for reminder and engagement types
+
+**Reasoning**:
+- Increases user engagement and retention
+- Reminds users to make decisions on "Let Me Think" items
+- Periodic engagement prompts encourage app usage
+- User control via settings toggle respects preferences
+- Local notifications don't require push server setup
+
+**Implementation**:
+- Two notification channels (Android): REMINDERS (high), ENGAGEMENT (default)
+- Scheduled notifications stored with reminder_id/notification_id
+- Automatic cancellation when user makes decision
+- User toggle in Profile settings for engagement notifications
+- Notification data includes item details for deep linking
+
+### 10. SafeAreaProvider for Android Navigation Bar (Phase 9)
+**Decision**: Use react-native-safe-area-context to handle system UI insets
+
+**Reasoning**:
+- edgeToEdgeEnabled requires proper inset handling
+- Dynamic tab bar height works on all Android devices
+- Supports both gesture and button navigation
+- Content never hidden behind system UI
+- Standard React Native solution
+
+**Implementation**:
+- SafeAreaProvider wraps entire app in App.tsx
+- useSafeAreaInsets() hook in TabNavigator
+- Dynamic paddingBottom and height based on insets.bottom
+- Fallback padding (15px) when insets.bottom is 0
+
+### 11. Horizontal Carousels for Home Screen (Phase 4)
 **Decision**: Use ScrollView with fixed-width horizontal items instead of grid
 
 **Reasoning**:

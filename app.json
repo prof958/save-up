@@ -25,8 +25,7 @@
       "versionCode": 1,
       "permissions": [
         "INTERNET"
-      ],
-      "googleServicesFile": "./google-services.json"
+      ]
     },
     "notification": {
       "icon": "./assets/notification-icon.png",

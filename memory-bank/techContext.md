@@ -101,7 +101,9 @@ save-up/
   "react-native-screens": "~4.16.0",
   "react-native-safe-area-context": "~5.6.0",
   "react-native-gesture-handler": "~2.20.0",
-  "expo-status-bar": "~3.0.8"
+  "expo-status-bar": "~3.0.8",
+  "expo-notifications": "^0.32.12",
+  "expo-device": "^8.0.9"
 }
 ```
 
