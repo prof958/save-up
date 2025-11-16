@@ -15,6 +15,7 @@ import { colors, spacing, fontSize, fontWeight, borderRadius } from '../constant
 import { saveDecision, syncStatsToSupabase, loadDecisions } from '../utils/decisionStorage';
 import { useProfile } from '../contexts/ProfileContext';
 import { formatCurrencyWithCode } from '../utils/currency';
+import { scheduleReminderNotification } from '../utils/notificationService';
 
 interface LetMeThinkScreenProps {
   route: {
@@ -77,7 +78,16 @@ const LetMeThinkScreen: React.FC<LetMeThinkScreenProps> = ({ route }) => {
       const timerOption = TIMER_OPTIONS.find((t) => t.id === selectedTimer);
       if (!timerOption) return;
 
-      const remindAt = new Date(Date.now() + timerOption.hours * 60 * 60 * 1000).toISOString();
+      const remindAtDate = new Date(Date.now() + timerOption.hours * 60 * 60 * 1000);
+      const remindAt = remindAtDate.toISOString();
+
+      // Schedule notification
+      const notificationId = await scheduleReminderNotification(
+        thinkingAbout,
+        itemPrice,
+        remindAtDate,
+        `reminder_${Date.now()}` // Temporary ID, will be replaced with decision ID
+      );
 
       await saveDecision({
         item_name: thinkingAbout,
@@ -86,6 +96,7 @@ const LetMeThinkScreen: React.FC<LetMeThinkScreenProps> = ({ route }) => {
         investment_value: 0,
         decision_type: 'let_me_think',
         remind_at: remindAt,
+        notification_id: notificationId,
         categories: selectedTags.length > 0 ? selectedTags : undefined, // Optional categories
       });
 

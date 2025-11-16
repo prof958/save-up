@@ -11,6 +11,10 @@ import OnboardingNavigator from './src/navigation/OnboardingNavigator';
 import { supabase } from './src/config/supabase';
 import { colors } from './src/constants/theme';
 import { onboardingRefreshTrigger } from './src/utils/onboardingTrigger';
+import { 
+  initializeNotificationChannels, 
+  registerForPushNotifications 
+} from './src/utils/notificationService';
 
 const RootNavigator: React.FC = () => {
   const { user, loading } = useAuth();
@@ -92,6 +96,16 @@ function NavigationWrapper({ children, navigationKey }: { children: React.ReactN
 }
 
 export default function App() {
+  useEffect(() => {
+    // Initialize notification system
+    const setupNotifications = async () => {
+      await initializeNotificationChannels();
+      await registerForPushNotifications();
+    };
+    
+    setupNotifications();
+  }, []);
+
   return (
     <AuthProvider>
       <ProfileProvider>

@@ -22,6 +22,7 @@ import { formatCurrencyWithCode, formatCompactCurrencyWithCode } from '../utils/
 import { getCurrencyByCode } from '../constants/regions';
 import Logo from '../components/shared/Logo';
 import BuyingQuestionnaire from '../components/calculator/BuyingQuestionnaire';
+import { cancelReminderNotification } from '../utils/notificationService';
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -132,6 +133,11 @@ const HomeScreen: React.FC = () => {
     setIsProcessingDecision(true);
 
     try {
+      // Cancel notification if exists
+      if (selectedReminder.notification_id) {
+        await cancelReminderNotification(selectedReminder.notification_id);
+      }
+
       // Update decision type
       // "bought" = buy, "wontbuy" = don't buy (erase reminder)
       const updatedDecision: Partial<SpendingDecision> = {
@@ -495,6 +501,11 @@ const HomeScreen: React.FC = () => {
 
               // If user wants to wait, navigate to Let Me Think screen
               if (shouldNavigateToLetMeThink) {
+                // Cancel notification if exists
+                if (questionnaireReminder.notification_id) {
+                  await cancelReminderNotification(questionnaireReminder.notification_id);
+                }
+
                 // Delete the current reminder first
                 const updatedDecision: Partial<SpendingDecision> = {
                   decision_type: 'dont_buy', // Mark as don't buy to remove from reminders
@@ -511,6 +522,11 @@ const HomeScreen: React.FC = () => {
                 await loadReminders();
                 setQuestionnaireReminder(null);
                 return;
+              }
+
+              // Cancel notification if exists
+              if (questionnaireReminder.notification_id) {
+                await cancelReminderNotification(questionnaireReminder.notification_id);
               }
 
               // Update decision and erase reminder

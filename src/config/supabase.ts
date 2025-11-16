@@ -41,6 +41,8 @@ export interface UserProfile {
   questionnaire_answers: QuestionnaireAnswers | null;
   onboarding_completed: boolean;
   show_buying_questionnaire: boolean;
+  // Notification preferences
+  enable_engagement_notifications: boolean;
   // Stats (stored in DB for sync/display)
   total_money_saved: number;
   total_hours_saved: number;
@@ -64,6 +66,7 @@ export interface SpendingDecision {
   investment_value: number;
   decision_type: DecisionType;
   remind_at: string | null; // ISO timestamp for "let_me_think" reminders
+  notification_id: string | null; // Notification ID for scheduled reminders
   created_at: string; // ISO timestamp
   categories?: string[]; // Selected categories/tags
 }

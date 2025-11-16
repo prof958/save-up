@@ -25,8 +25,25 @@
       "versionCode": 1,
       "permissions": [
         "INTERNET"
-      ]
+      ],
+      "googleServicesFile": "./google-services.json"
     },
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#4CAF50",
+      "androidMode": "default",
+      "androidCollapsedTitle": "Save Up"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#4CAF50",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
     "web": {
       "favicon": "./assets/logo.png"
     },

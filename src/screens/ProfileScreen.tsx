@@ -231,6 +231,30 @@ const ProfileScreen: React.FC = () => {
             thumbColor={profile.show_buying_questionnaire ? colors.accent : '#f4f3f4'}
           />
         </View>
+
+        {/* Engagement Notifications Toggle */}
+        <View style={styles.menuItem}>
+          <Ionicons name="notifications-outline" size={24} color={colors.textSecondary} />
+          <View style={styles.menuTextContainer}>
+            <Text style={styles.menuText}>Engagement Reminders</Text>
+            <Text style={styles.menuSubtext}>Periodic reminders to save up</Text>
+          </View>
+          <Switch
+            value={profile.enable_engagement_notifications}
+            onValueChange={async (value) => {
+              try {
+                await updateProfile({ enable_engagement_notifications: value });
+                // Update scheduled notifications
+                const { scheduleEngagementNotifications } = await import('../utils/notificationService');
+                await scheduleEngagementNotifications(value);
+              } catch (error) {
+                Alert.alert('Error', 'Failed to update notification settings');
+              }
+            }}
+            trackColor={{ false: colors.inactive, true: colors.accent + '50' }}
+            thumbColor={profile.enable_engagement_notifications ? colors.accent : '#f4f3f4'}
+          />
+        </View>
         
         <TouchableOpacity 
           style={styles.menuItem} 
