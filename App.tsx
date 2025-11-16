@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 import { ProfileProvider } from './src/contexts/ProfileContext';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -107,14 +108,16 @@ export default function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <ProfileProvider>
-        <NavigationWrapper navigationKey="main">
-          <RootNavigator />
-        </NavigationWrapper>
-        <StatusBar style="auto" />
-      </ProfileProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <ProfileProvider>
+          <NavigationWrapper navigationKey="main">
+            <RootNavigator />
+          </NavigationWrapper>
+          <StatusBar style="auto" />
+        </ProfileProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 

@@ -257,6 +257,7 @@ const SpendingScreen: React.FC = () => {
                 investment_value: calculationResult.investmentValue,
                 decision_type: decisionType,
                 remind_at: null,
+                notification_id: null,
               });
 
               const decisions = await loadDecisions();

@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform, TouchableOpacity, Alert } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeScreen from '../screens/HomeScreen';
 import SpendingScreen from '../screens/SpendingScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -34,6 +35,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const TabNavigator = () => {
   const { signOut } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const handleSignOut = () => {
     Alert.alert(
@@ -63,9 +65,9 @@ const TabNavigator = () => {
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.inactive,
         tabBarStyle: {
-          paddingBottom: Platform.OS === 'ios' ? 30 : 15,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 15,
           paddingTop: 10,
-          height: Platform.OS === 'ios' ? 95 : 75,
+          height: (insets.bottom > 0 ? insets.bottom : 15) + 65,
           backgroundColor: '#fff',
           borderTopWidth: 1,
           borderTopColor: '#f0f0f0',
